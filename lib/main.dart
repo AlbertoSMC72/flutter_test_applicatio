@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/features/login/presentation/pages/login.dart';
 import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
+import 'package:screen_protector/screen_protector.dart';
 
-
-//implementar el bloqueo de capturas de pantalla
-import 'package:flutter/services.dart';
-void main() {
-  // Bloquear capturas de pantalla
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setEnabledSystemUIOverlays([]);
   
-  // Iniciar la aplicación
-  runApp(const MyApp());
-}
-
-
-void main() {
+  // Proteger la pantalla de capturas y grabaciones
+  await ScreenProtector.protectDataLeakageOn();
+  
   runApp(const MyApp());
 }
 
@@ -25,20 +18,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Posts Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        cardTheme: CardTheme(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      home: const PostsPage(),
+      title: 'Mi App Segura',
+      debugShowCheckedModeBanner: false, // Opcional: quitar banner de debug
+      initialRoute: '/Login',
+      routes: {
+        '/Page2': (context) => PostsPage(),
+        '/Login': (context) => LoginPage(),
+      },
     );
   }
 }

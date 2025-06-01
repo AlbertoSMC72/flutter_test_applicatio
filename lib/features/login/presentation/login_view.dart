@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +15,7 @@ class RegisterScreen extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
+            // Círculo amarillo superior
             Positioned(
               top: -screenHeight * 0.12,
               left: screenWidth * 0.35,
@@ -28,6 +29,7 @@ class RegisterScreen extends StatelessWidget {
                 ),
               ),
             ),
+            // Círculo morado superior derecha
             Positioned(
               top: -screenHeight * 0.08,
               right: -screenWidth * 0.25,
@@ -40,6 +42,7 @@ class RegisterScreen extends StatelessWidget {
                 ),
               ),
             ),
+            // Círculo morado inferior izquierda
             Positioned(
               bottom: -screenHeight * 0.12,
               left: -screenWidth * 0.25,
@@ -52,6 +55,7 @@ class RegisterScreen extends StatelessWidget {
                 ),
               ),
             ),
+            // Círculo amarillo inferior
             Positioned(
               bottom: -screenHeight * 0.12,
               right: screenWidth * 0.3,
@@ -73,25 +77,25 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: screenHeight * 0.1),
+                    SizedBox(height: screenHeight * 0.12),
 
-                    // Título "Registro"
+                    // Título "Inicio"
                     Center(
                       child: Text(
-                        'Registro',
+                        'Inicio',
                         style: GoogleFonts.monomaniacOne(
                           fontSize: screenWidth * 0.23,
-                        color: const Color(0xFFF2F2F2),
+                          color: const Color(0xFFF2F2F2),
                         ),
                       ),
                     ),
 
-                    SizedBox(height: screenHeight * 0.08),
+                    SizedBox(height: screenHeight * 0.1),
 
                     // Label Correo
                     Text(
-                        'Correo',
-                        style: GoogleFonts.monomaniacOne(
+                      'Correo',
+                      style: GoogleFonts.monomaniacOne(
                         fontSize: screenWidth * 0.04,
                         color: const Color(0xFFF2F2F2),
                         letterSpacing: 1.0,
@@ -141,9 +145,9 @@ class RegisterScreen extends StatelessWidget {
                     Text(
                       'Contraseña',
                       style: GoogleFonts.monomaniacOne(
-                      fontSize: screenWidth * 0.04,
-                      color: const Color(0xFFF2F2F2),
-                      letterSpacing: 1.0,
+                        fontSize: screenWidth * 0.04,
+                        color: const Color(0xFFF2F2F2),
+                        letterSpacing: 1.0,
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
@@ -183,64 +187,16 @@ class RegisterScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: screenHeight * 0.025),
-
-                    // Label Confirmar Contraseña
-                    Text(
-                      'Confirmar contraseña',
-                      style: GoogleFonts.monomaniacOne(
-                      fontSize: screenWidth * 0.04,
-                      color: const Color(0xFFF2F2F2),
-                      letterSpacing: 1.0,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-
-                    // Campo de Confirmar Contraseña
-                    Container(
-                      height: screenHeight * 0.06,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        color: const Color(0xFFE0E0E0),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.05,
-                              ),
-                              child: Text(
-                                '',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: screenWidth * 0.04,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(right: screenWidth * 0.04),
-                            child: Icon(
-                              Icons.key,
-                              color: Colors.black54,
-                              size: screenWidth * 0.06,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
                     SizedBox(height: screenHeight * 0.05),
 
-                    // Botón de Registro
+                    // Botón de Inicio de Sesión
                     Center(
                       child: Container(
                         width: screenWidth * 0.25,
                         height: screenHeight * 0.06,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(25),
-                          color: const Color(0xFFFFEB3B), // Amarillo
+                          color: const Color(0xFFEDED3D), // Amarillo
                           boxShadow: [
                             BoxShadow(
                               offset: const Offset(0, 4),
@@ -249,22 +205,35 @@ class RegisterScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_add,
-                              color: Colors.black87,
-                              size: screenWidth * 0.05,
-                            ),
-                          ],
+                        child: Center(
+                          child: Icon(
+                            Icons.login,
+                            color: Colors.black87,
+                            size: screenWidth * 0.06,
+                          ),
                         ),
                       ),
                     ),
 
-                    SizedBox(height: screenHeight * 0.08),
+                    SizedBox(height: screenHeight * 0.04),
 
-                    // Texto para ir a login
+                    /* // Texto "Recuperar contraseña"
+                    Center(
+                      child: Text(
+                        'Recuperar contraseña',
+                        style: GoogleFonts.monomaniacOne(
+                          fontSize: screenWidth * 0.035,
+                          color: const Color(0xFFF2F2F2),
+                          letterSpacing: 1.0,
+                          decoration: TextDecoration.underline,
+                          decorationColor: const Color(0xFFF2F2F2),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.08), */
+
+                    // Texto para ir a registro
                     Center(
                       child: RichText(
                         text: TextSpan(
@@ -274,9 +243,9 @@ class RegisterScreen extends StatelessWidget {
                             letterSpacing: 1.0,
                           ),
                           children: [
-                            const TextSpan(text: 'Ya tienes cuenta ? '),
+                            const TextSpan(text: 'No tienes cuenta ? '),
                             TextSpan(
-                              text: 'Inicia sesión',
+                              text: 'Regístrate',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.04,
                                 color: const Color(0xFFEDED3D),
@@ -290,8 +259,7 @@ class RegisterScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    SizedBox(height: screenHeight),
+                    SizedBox(height: screenHeight ),
                   ],
                 ),
               ),

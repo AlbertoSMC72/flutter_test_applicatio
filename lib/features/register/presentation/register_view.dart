@@ -81,7 +81,7 @@ class RegisterScreen extends StatelessWidget {
                         'Registro',
                         style: GoogleFonts.monomaniacOne(
                           fontSize: screenWidth * 0.23,
-                          color: Colors.white,
+                        color: const Color(0xFFF2F2F2),
                         ),
                       ),
                     ),
@@ -90,13 +90,14 @@ class RegisterScreen extends StatelessWidget {
 
                     // Label Correo
                     Text(
-                      'Correo',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                        'Correo',
+                        style: GoogleFonts.monomaniacOne(
+                        fontSize: screenWidth * 0.04,
+                        color: const Color(0xFFF2F2F2),
+                        letterSpacing: 1.0,
                       ),
                     ),
+
                     SizedBox(height: screenHeight * 0.01),
 
                     // Campo de Correo
@@ -139,10 +140,10 @@ class RegisterScreen extends StatelessWidget {
                     // Label Contraseña
                     Text(
                       'Contraseña',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                      style: GoogleFonts.monomaniacOne(
+                      fontSize: screenWidth * 0.04,
+                      color: const Color(0xFFF2F2F2),
+                      letterSpacing: 1.0,
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
@@ -187,10 +188,10 @@ class RegisterScreen extends StatelessWidget {
                     // Label Confirmar Contraseña
                     Text(
                       'Confirmar contraseña',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                      style: GoogleFonts.monomaniacOne(
+                      fontSize: screenWidth * 0.04,
+                      color: const Color(0xFFF2F2F2),
+                      letterSpacing: 1.0,
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
@@ -259,10 +260,10 @@ class RegisterScreen extends StatelessWidget {
                             SizedBox(width: screenWidth * 0.02),
                             Text(
                               'Registro',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.035,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                              style: GoogleFonts.monomaniacOne(
+                                fontSize: screenWidth * 0.04,
+                                color: const Color.fromARGB(255, 0, 0, 0),
+                                letterSpacing: 1.0,
                               ),
                             ),
                           ],
@@ -276,9 +277,10 @@ class RegisterScreen extends StatelessWidget {
                     Center(
                       child: RichText(
                         text: TextSpan(
-                          style: TextStyle(
+                          style: GoogleFonts.monomaniacOne(
                             fontSize: screenWidth * 0.04,
-                            color: Colors.white,
+                            color: const Color(0xFFF2F2F2),
+                            letterSpacing: 1.0,
                           ),
                           children: [
                             const TextSpan(text: 'Ya tienes cuenta ? '),
@@ -286,10 +288,11 @@ class RegisterScreen extends StatelessWidget {
                               text: 'Inicia sesión',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.04,
-                                color: const Color(0xFFFFEB3B),
+                                color: const Color(0xFFEDED3D),
                                 fontWeight: FontWeight.bold,
                                 decoration: TextDecoration.underline,
-                                decorationColor: const Color(0xFFFFEB3B),
+                                decorationColor: const Color(0xFFEDED3D),
+                                letterSpacing: 1.0,
                               ),
                             ),
                           ],

@@ -37,6 +37,7 @@ dependencies:
   dio: ^5.8.0+1
   flutter_bloc: ^9.1.1
   screen_protector: ^1.4.2
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:

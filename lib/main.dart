@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/features/home/presentation/home_view.dart';
 import 'package:flutter_application_1/features/login/presentation/login_view.dart';
 import 'package:flutter_application_1/features/register/presentation/register_view.dart';
+import 'package:flutter_application_1/features/test/home.dart';
 import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
 import 'package:screen_protector/screen_protector.dart';
 
@@ -21,11 +23,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mi App Segura',
       debugShowCheckedModeBanner: false, // Opcional: quitar banner de debug
-      initialRoute: '/Login',
+      initialRoute: '/Home',
       routes: {
         '/Page2': (context) => PostsPage(),
         '/Login': (context) => LoginScreen(),
-        "/Register": (context) => RegisterScreen()
+        "/Register": (context) => RegisterScreen(),
+        "/Test": (context) => DemoScreen(),
+        "/Home": (context) => HomeView(),
       },
     );
   }

@@ -185,7 +185,9 @@ class _HomeScreenState extends State<HomeScreen> {
           const CustomTopBar(),
 
           // NavigationBar
-          const CustomNavigationBar(),
+          const CustomNavigationBar(
+            currentRoute: '/Home'
+          ),
         ],
       ),
     );

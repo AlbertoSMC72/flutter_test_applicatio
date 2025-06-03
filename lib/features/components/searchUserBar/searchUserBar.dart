@@ -17,7 +17,7 @@ class CustomTopBar extends StatefulWidget {
   const CustomTopBar({
     Key? key,
     this.notificationCount = 0,
-    this.searchHint = "Buscar...",
+    this.searchHint = "Buscar Libro",
     this.onSearchTap,
     this.searchController,
     this.onSearchChanged,
@@ -49,17 +49,6 @@ class _CustomTopBarState extends State<CustomTopBar> {
         _isMenuOpen = false;
       });
     }
-  }
-
-  // Función por defecto para mostrar SnackBar
-  void _showDefaultAction(BuildContext context, String action) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(action),
-        backgroundColor: const Color(0xFFECEC3D),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
@@ -234,7 +223,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                             if (widget.onViewProfile != null) {
                               widget.onViewProfile!();
                             } else {
-                              _showDefaultAction(context, 'Ver Perfil presionado');
+                              // navegacion a esa vista
                             }
                           },
                           child: SizedBox(
@@ -262,7 +251,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                             if (widget.onSettings != null) {
                               widget.onSettings!();
                             } else {
-                              _showDefaultAction(context, 'Configuración presionada');
+                              // navegacion a esa vista
                             }
                           },
                           child: SizedBox(
@@ -290,7 +279,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                             if (widget.onAddFriend != null) {
                               widget.onAddFriend!();
                             } else {
-                              _showDefaultAction(context, 'Agregar Amigo presionado');
+                              // navegacion a esa vista
                             }
                           },
                           child: SizedBox(
@@ -318,7 +307,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                             if (widget.onNotifications != null) {
                               widget.onNotifications!();
                             } else {
-                              _showDefaultAction(context, 'Notificaciones presionadas');
+                              // navegacion a esa vista
                             }
                           },
                           child: SizedBox(
@@ -346,7 +335,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                             if (widget.onLogout != null) {
                               widget.onLogout!();
                             } else {
-                              _showLogoutDialog(context);
+                              // navegacion a esa vista
                             }
                           },
                           child: SizedBox(
@@ -383,51 +372,6 @@ class _CustomTopBarState extends State<CustomTopBar> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Diálogo por defecto para logout
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
-        title: Text(
-          'Cerrar Sesión',
-          style: GoogleFonts.monomaniacOne(
-            color: Colors.white,
-          ),
-        ),
-        content: Text(
-          '¿Estás seguro de que quieres cerrar sesión?',
-          style: GoogleFonts.monomaniacOne(
-            color: Colors.white70,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancelar',
-              style: GoogleFonts.monomaniacOne(
-                color: const Color(0xFFECEC3D),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showDefaultAction(context, 'Sesión cerrada');
-            },
-            child: Text(
-              'Cerrar Sesión',
-              style: GoogleFonts.monomaniacOne(
-                color: const Color(0xFFD8292C),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

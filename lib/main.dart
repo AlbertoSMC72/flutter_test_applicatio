@@ -8,6 +8,7 @@ import 'core/dependency_injection.dart' as di;
 // Feature imports
 import 'features/home/presentation/home_view.dart';
 import 'features/login/presentation/login_view.dart';
+import 'features/login/presentation/cubit/login_cubit.dart';
 import 'features/register/presentation/register_view.dart';
 import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/test/home.dart';
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/Register', // Cambiado para probar el registro
+      initialRoute: '/Login', // Cambiado para empezar en login
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/Page2':
@@ -44,7 +45,12 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => HomeScreen());
           
           case '/Login':
-            return MaterialPageRoute(builder: (_) => LoginScreen());
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider(
+                create: (context) => di.sl<LoginCubit>(),
+                child: const LoginScreen(),
+              ),
+            );
           
           case '/Register':
             return MaterialPageRoute(

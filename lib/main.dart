@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/home/presentation/home_view.dart';
-import 'package:flutter_application_1/features/login/presentation/login_view.dart';
-import 'package:flutter_application_1/features/register/presentation/register_view.dart';
-import 'package:flutter_application_1/features/test/home.dart';
-import 'package:flutter_application_1/features/writenBook/presentation/writenBook_view.dart';
-import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
-import 'package:flutter/services.dart';
+
+// Core imports
+import 'core/dependency_injection.dart' as di;
+
+// Feature imports
+import 'features/home/presentation/home_view.dart';
+import 'features/login/presentation/login_view.dart';
+import 'features/register/presentation/register_view.dart';
+import 'features/register/presentation/cubit/register_cubit.dart';
+import 'features/test/home.dart';
+import 'features/writenBook/presentation/writenBook_view.dart';
+import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar dependency injection
+  await di.init();
+  
+  // Proteger la pantalla de capturas y grabaciones
   await ScreenProtector.protectDataLeakageOn();
-
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
   
   runApp(const MyApp());
 }
@@ -27,14 +34,41 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/Writening',
-      routes: {
-        '/Page2': (context) => PostsPage(),
-        "/Home": (context) => HomeScreen(),
-        '/Login': (context) => LoginScreen(),
-        "/Register": (context) => RegisterScreen(),
-        "/Test": (context) => DemoScreen(),
-        "/Writening": (context) => const UserStoriesScreen(),
+      initialRoute: '/Register', // Cambiado para probar el registro
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/Page2':
+            return MaterialPageRoute(builder: (_) => PostsPage());
+          
+          case '/Home':
+            return MaterialPageRoute(builder: (_) => HomeScreen());
+          
+          case '/Login':
+            return MaterialPageRoute(builder: (_) => LoginScreen());
+          
+          case '/Register':
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider(
+                create: (context) => di.sl<RegisterCubit>(),
+                child: const RegisterScreen(),
+              ),
+            );
+          
+          case '/Test':
+            return MaterialPageRoute(builder: (_) => DemoScreen());
+          
+          case '/Writening':
+            return MaterialPageRoute(builder: (_) => const UserStoriesScreen());
+          
+          default:
+            return MaterialPageRoute(
+              builder: (_) => Scaffold(
+                body: Center(
+                  child: Text('Ruta no encontrada: ${settings.name}'),
+                ),
+              ),
+            );
+        }
       },
     );
   }

@@ -13,6 +13,7 @@ import 'features/register/presentation/register_view.dart';
 import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/test/home.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
+import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
 
 void main() async {
@@ -64,7 +65,12 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => DemoScreen());
           
           case '/Writening':
-            return MaterialPageRoute(builder: (_) => const UserStoriesScreen());
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider(
+                create: (context) => di.sl<BooksCubit>(),
+                child: const UserStoriesScreen(),
+              ),
+            );
           
           default:
             return MaterialPageRoute(

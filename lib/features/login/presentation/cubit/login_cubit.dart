@@ -1,11 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../domain/usecases/login_usecase.dart';
 import 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final LoginUseCase loginUseCase;
+  final StorageService storageService;
 
-  LoginCubit({required this.loginUseCase}) : super(const LoginInitial());
+  LoginCubit({
+    required this.loginUseCase,
+    required this.storageService,
+  }) : super(const LoginInitial());
 
   // Campos del formulario
   String _email = '';
@@ -65,6 +70,14 @@ class LoginCubit extends Cubit<LoginState> {
       final user = await loginUseCase.call(
         email: _email,
         password: _password,
+      );
+
+      // Guardar datos del usuario en storage
+      await storageService.saveUserData(
+        userId: user.id ?? '',
+        username: user.username ?? '',
+        email: user.email,
+        token: user.token,
       );
 
       emit(LoginSuccess(user: user));

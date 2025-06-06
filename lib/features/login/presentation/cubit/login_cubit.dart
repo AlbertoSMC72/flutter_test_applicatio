@@ -72,13 +72,14 @@ class LoginCubit extends Cubit<LoginState> {
         password: _password,
       );
 
-      // Guardar datos del usuario en storage
       await storageService.saveUserData(
-        userId: user.id ?? '',
+        userId: user.id?.toString() ?? '',
         username: user.username ?? '',
-        email: user.email,
+        email: _email,
         token: user.token,
       );
+
+      print('[DEBUG_LOGIN] Datos guardados - userId: ${user.id}, username: ${user.username}');
 
       emit(LoginSuccess(user: user));
     } catch (e) {

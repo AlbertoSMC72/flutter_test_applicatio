@@ -26,6 +26,13 @@ import '../features/writenBook/domain/repositories/books_repository.dart';
 import '../features/writenBook/domain/usecases/books_usecases.dart';
 import '../features/writenBook/presentation/cubit/books_cubit.dart';
 
+// Home feature imports
+import '../features/home/data/datasources/home_api_service.dart';
+import '../features/home/data/repositories/home_repository_impl.dart';
+import '../features/home/domain/repositories/home_repository.dart';
+import '../features/home/domain/usecases/get_all_books_usecase.dart';
+import '../features/home/presentation/cubit/home_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
@@ -43,6 +50,9 @@ Future<void> init() async {
   
   // Books feature
   _initBooksFeature();
+  
+  // Home feature
+  _initHomeFeature();
 }
 
 void _initRegisterFeature() {
@@ -108,5 +118,25 @@ void _initBooksFeature() {
     getAllGenresUseCase: sl(),
     createGenreUseCase: sl(),
     storageService: sl(),
+  ));
+}
+
+void _initHomeFeature() {
+  // Data sources
+  sl.registerLazySingleton<HomeApiService>(
+    () => HomeApiServiceImpl(dio: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<HomeRepository>(
+    () => HomeRepositoryImpl(apiService: sl()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetAllBooksUseCase(sl()));
+
+  // Cubits
+  sl.registerFactory(() => HomeCubit(
+    getAllBooksUseCase: sl(),
   ));
 }

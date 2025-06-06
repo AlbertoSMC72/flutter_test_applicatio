@@ -1,4 +1,3 @@
-// features/writenBook/presentation/writenBook_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,9 +38,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
   }
 
   void _showCreateBookModal() {
-    print('[DEBUG] Abriendo modal de creación...');
     
-    // CAPTURAR EL CUBIT ANTES DE ABRIR EL MODAL
     final booksCubit = context.read<BooksCubit>();
     
     // Variables locales para el modal
@@ -117,7 +114,6 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                       });
                       
                       try {
-                        // USA LA REFERENCIA CAPTURADA, NO context.read
                         final genres = await booksCubit.getAllGenresUseCase.call();
                         
                         setState(() {
@@ -540,7 +536,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                             
                             return Column(
                               children: [
-                                // Información del usuario
+                                /* // Información del usuario
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   margin: const EdgeInsets.only(bottom: 20),
@@ -585,7 +581,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                                       ),
                                     ],
                                   ),
-                                ),
+                                ), */
                                 
                                 // Lista de libros
                                 ...state.userBooks.books.map((book) => Padding(

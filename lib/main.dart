@@ -15,6 +15,7 @@ import 'features/test/home.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
 import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
+import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,14 +37,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/Login', // Cambiado para empezar en login
+      initialRoute: '/Login',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/Page2':
             return MaterialPageRoute(builder: (_) => PostsPage());
           
           case '/Home':
-            return MaterialPageRoute(builder: (_) => HomeScreen());
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider(
+                create: (context) => di.sl<HomeCubit>(),
+                child: const HomeScreen(),
+              ),
+            );
           
           case '/Login':
             return MaterialPageRoute(

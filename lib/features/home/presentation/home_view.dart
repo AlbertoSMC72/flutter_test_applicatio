@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/features/home/domain/entities/home_book_entity.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
 import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
+import 'cubit/home_cubit.dart';
+import 'cubit/home_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,35 +16,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int currentNavIndex = 2; // Home seleccionado
-  int notificationCount = 0;
   final TextEditingController searchController = TextEditingController();
+  bool _hasLoadedInitially = false; // Flag para evitar múltiples cargas
 
-  // Datos simulados de libros
-  final List<Map<String, String>> booksSection1 = [
-    {'title': 'El Gran Gatsby', 'category': 'Fanficción'},
-    {'title': '1984', 'category': 'Ciencia Ficción'},
-    {'title': 'Cien Años de Soledad', 'category': 'Realismo'},
-    {'title': 'Harry Potter y la Piedra Filosofal', 'category': 'Fantasía'},
-    {'title': 'Dune', 'category': 'Ciencia Ficción'},
-    {'title': 'El Hobbit', 'category': 'Fantasía'},
-  ];
-
-  final List<Map<String, String>> booksSection2 = [
-    {'title': 'Don Quijote de la Mancha', 'category': 'Clásico'},
-    {'title': 'El Señor de los Anillos', 'category': 'Fantasía'},
-    {'title': 'Orgullo y Prejuicio', 'category': 'Romance'},
-    {'title': 'Crimen y Castigo', 'category': 'Clásico'},
-    {'title': 'Los Miserables', 'category': 'Drama'},
-  ];
-
-  final List<Map<String, String>> booksSection3 = [
-    {'title': 'Título Muy Muy Largo Para Probar', 'category': 'Prueba'},
-    {'title': 'Corto', 'category': 'Mini'},
-    {'title': 'Título Mediano', 'category': 'Normal'},
-    {'title': 'Otro Libro Interesante', 'category': 'Drama'},
-    {'title': 'La Última Oportunidad', 'category': 'Suspenso'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // NO cargar aquí para evitar problemas de Provider
+  }
 
   @override
   void dispose() {
@@ -48,19 +31,34 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _handleBookTap(String title, String category) {
+  void _handleBookTap(HomeBookEntity book) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Abriendo: $title ($category)'),
+        content: Text('Abriendo: ${book.title}'),
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  Widget _buildBooksRow(List<Map<String, String>> books) {
+  Widget _buildBooksRow(List<HomeBookEntity> books) {
+    if (books.isEmpty) {
+      return SizedBox(
+        height: 240,
+        child: Center(
+          child: Text(
+            'No hay libros disponibles',
+            style: GoogleFonts.monomaniacOne(
+              color: Colors.white54,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
-      height: 240, // Altura fija para el contenedor del scroll horizontal
+      height: 240,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: books.length,
@@ -72,13 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
               right: index == books.length - 1 ? 12.0 : 0,
             ),
             child: BookImage(
-              title: book['title'] ?? 'Título',
-              category: book['category'] ?? 'Comedia',
+              title: book.title,
+              category: book.genres.isNotEmpty ? book.genres.first : 'Sin género',
               imageUrl: 'https://placehold.co/150x200',
-              onTap: () => _handleBookTap(
-                book['title'] ?? 'Título',
-                book['category'] ?? 'Comedia',
-              ),
+              onTap: () => _handleBookTap(book),
             ),
           );
         },
@@ -118,6 +113,114 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 120),
+            
+            // Loading para cada sección
+            _buildCategoryHeader('Nuevas publicaciones'),
+            SizedBox(
+              height: 240,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: const Color(0xFFECEC3D),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            _buildCategoryHeader('Recomendados para ti'),
+            SizedBox(
+              height: 240,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: const Color(0xFFECEC3D),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            _buildCategoryHeader('Tendencias'),
+            SizedBox(
+              height: 240,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: const Color(0xFFECEC3D),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 200),
+            
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error al cargar los libros',
+              style: GoogleFonts.monomaniacOne(
+                color: Colors.white,
+                fontSize: 20,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: GoogleFonts.monomaniacOne(
+                color: Colors.red,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                context.read<HomeCubit>().loadBooks();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFECEC3D),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              child: Text(
+                'Reintentar',
+                style: GoogleFonts.monomaniacOne(
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,34 +253,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Contenido principal
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 120), // Espacio para TopBar
+          // Contenido principal con estados
+          BlocListener<HomeCubit, HomeState>(
+            listener: (context, state) {
+              if (state is HomeError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: BlocBuilder<HomeCubit, HomeState>(
+              builder: (context, state) {
+                // Cargar libros automáticamente solo UNA vez
+                if (state is HomeInitial && !_hasLoadedInitially) {
+                  _hasLoadedInitially = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) { // Verificar que el widget sigue montado
+                      context.read<HomeCubit>().loadBooks();
+                    }
+                  });
+                }
+                
+                if (state is HomeLoading) {
+                  return _buildLoadingState();
+                } else if (state is HomeError) {
+                  return _buildErrorState(state.message);
+                } else if (state is HomeLoaded) {
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<HomeCubit>().refreshBooks();
+                    },
+                    color: const Color(0xFFECEC3D),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 120), // Espacio para TopBar
 
-                  // Primera sección
-                  _buildCategoryHeader('Nuevas publicaciones'),
-                  _buildBooksRow(booksSection1),
-                  
-                  const SizedBox(height: 20),
+                            // Primera sección - Nuevas publicaciones
+                            _buildCategoryHeader('Nuevas publicaciones'),
+                            _buildBooksRow(state.newPublications),
+                            
+                            const SizedBox(height: 20),
 
-                  // Segunda sección
-                  _buildCategoryHeader('Recomendados para ti'),
-                  _buildBooksRow(booksSection2),
-                  
-                  const SizedBox(height: 20),
+                            // Segunda sección - Recomendados
+                            _buildCategoryHeader('Recomendados para ti'),
+                            _buildBooksRow(state.recommended),
+                            
+                            const SizedBox(height: 20),
 
-                  // Tercera sección
-                  _buildCategoryHeader('Tendencias'),
-                  _buildBooksRow(booksSection3),
-                  
-                  const SizedBox(height: 100), // Espacio para NavigationBar
-                ],
-              ),
+                            // Tercera sección - Tendencias
+                            _buildCategoryHeader('Tendencias'),
+                            _buildBooksRow(state.trending),
+                            
+                            const SizedBox(height: 100), // Espacio para NavigationBar
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                
+                // Estado inicial
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: const Color(0xFFECEC3D),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -185,8 +334,13 @@ class _HomeScreenState extends State<HomeScreen> {
           const CustomTopBar(),
 
           // NavigationBar
-          const CustomNavigationBar(
-            currentRoute: '/Home'
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: CustomNavigationBar(
+              currentRoute: '/Home'
+            ),
           ),
         ],
       ),

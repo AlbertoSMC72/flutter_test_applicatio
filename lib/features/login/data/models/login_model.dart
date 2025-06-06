@@ -11,9 +11,9 @@ class LoginModel extends LoginEntity {
   // Factory para crear desde JSON (respuesta del backend)
   factory LoginModel.fromJson(Map<String, dynamic> json) {
     return LoginModel(
-      id: json['id']?.toString(),
+      id: json['id']?.toString(), // Convertir a string para consistencia
       username: json['username'],
-      email: json['email'] ?? '',
+      email: json['email'] ?? '', // El backend no devuelve email en login
       token: json['token'],
     );
   }

@@ -39,6 +39,10 @@ dependencies:
   screen_protector: ^1.4.2
   google_fonts: ^6.1.0
 
+  # Paquetes para geolocalización
+  geolocator: ^10.1.0
+  permission_handler: ^11.3.1
+  
   # State Management
   equatable: ^2.0.5
   

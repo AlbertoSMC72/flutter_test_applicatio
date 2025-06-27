@@ -6,24 +6,21 @@ import 'package:screen_protector/screen_protector.dart';
 import 'core/dependency_injection.dart' as di;
 
 // Feature imports
+import 'features/book/presentation/book_detail_view.dart';
 import 'features/home/presentation/home_view.dart';
 import 'features/login/presentation/login_view.dart';
 import 'features/login/presentation/cubit/login_cubit.dart';
 import 'features/register/presentation/register_view.dart';
 import 'features/register/presentation/cubit/register_cubit.dart';
-import 'features/test/home.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
 import 'features/writenBook/presentation/cubit/books_cubit.dart';
-import 'features/jsonPlaceHolder/presentation/pages/post_page.dart';
 import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializar dependency injection
   await di.init();
   
-  // Proteger la pantalla de capturas y grabaciones
   await ScreenProtector.protectDataLeakageOn();
   
   runApp(const MyApp());
@@ -37,11 +34,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/Login',
+      initialRoute: '/BookDetail',
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case '/Page2':
-            return MaterialPageRoute(builder: (_) => PostsPage());
           
           case '/Home':
             return MaterialPageRoute(
@@ -67,9 +62,6 @@ class MyApp extends StatelessWidget {
               ),
             );
           
-          case '/Test':
-            return MaterialPageRoute(builder: (_) => DemoScreen());
-          
           case '/Writening':
             return MaterialPageRoute(
               builder: (_) => BlocProvider(
@@ -77,6 +69,22 @@ class MyApp extends StatelessWidget {
                 child: const UserStoriesScreen(),
               ),
             );
+
+          case '/BookDetail':
+          final args = settings.arguments as Map<String, dynamic>? ?? {};
+          
+          return MaterialPageRoute(
+            builder: (_) => BookDetailScreen(
+              bookId: args['bookId']?.toString() ?? '0',
+              bookTitle: args['bookTitle']?.toString() ?? 'Título Desconocido',
+              bookDescription: args['bookDescription']?.toString() ?? 'Sin descripción disponible',
+              bookImageUrl: args['bookImageUrl']?.toString() ?? 'https://placehold.co/150x200',
+              authorName: args['authorName']?.toString() ?? 'Autor Desconocido',
+              genres: args['genres'] is List ? 
+                      List<String>.from(args['genres']) : 
+                      <String>[],
+            ),
+          );
           
           default:
             return MaterialPageRoute(

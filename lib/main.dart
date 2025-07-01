@@ -7,6 +7,7 @@ import 'core/dependency_injection.dart' as di;
 
 // Feature imports
 import 'features/book/presentation/book_detail_view.dart';
+import 'features/contentChapter/presentation/contentChapter_view.dart';
 import 'features/home/presentation/home_view.dart';
 import 'features/login/presentation/login_view.dart';
 import 'features/login/presentation/cubit/login_cubit.dart';
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/BookDetail',
+      initialRoute: '/Login',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           
@@ -83,6 +84,16 @@ class MyApp extends StatelessWidget {
               genres: args['genres'] is List ? 
                       List<String>.from(args['genres']) : 
                       <String>[],
+            ),
+          );
+
+          case '/ChapterReader':
+          final args = settings.arguments as Map<String, dynamic>? ?? {};
+
+          return MaterialPageRoute(
+            builder: (_) => ChapterReaderScreen(
+              chapterId: args['chapterId']?.toString() ?? '1',
+              bookTitle: args['bookTitle']?.toString() ?? 'Libro desconocido',
             ),
           );
           

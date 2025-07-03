@@ -218,14 +218,14 @@ class _CustomTopBarState extends State<CustomTopBar> {
                   child: Column(
                     children: [
                       // Ver Perfil
-                      _buildMenuItem(
+                        _buildMenuItem(
                         'Ver Perfil',
                         () {
                           _closeMenu();
-                          widget.onViewProfile?.call();
+                          Navigator.pushNamed(context, '/Profile'); // Siempre será perfil propio
                         },
                         isFirst: true,
-                      ),
+                        ),
                       
                       // Configuración
                       _buildMenuItem(

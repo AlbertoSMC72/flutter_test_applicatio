@@ -5,7 +5,8 @@ import 'register_state.dart';
 class RegisterCubit extends Cubit<RegisterState> {
   final RegisterUseCase registerUseCase;
 
-  RegisterCubit({required this.registerUseCase}) : super(const RegisterInitial());
+  RegisterCubit({required this.registerUseCase})
+    : super(const RegisterInitial());
 
   // Campos del formulario
   String _username = '';
@@ -48,8 +49,14 @@ class RegisterCubit extends Cubit<RegisterState> {
     String? confirmPasswordError;
 
     // Validar username
-    if (_username.isNotEmpty && _username.trim().length < 3) {
-      usernameError = 'El usuario debe tener al menos 3 caracteres';
+    if (_username.isNotEmpty) {
+      if (_username.trim().length < 3) {
+        usernameError = 'El usuario debe tener al menos 3 caracteres';
+      } else if (_username.contains(' ') ||
+          RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(_username)) {
+        usernameError =
+            'El usuario no debe contener espacios ni caracteres especiales';
+      }
     }
 
     // Validar email
@@ -58,8 +65,15 @@ class RegisterCubit extends Cubit<RegisterState> {
     }
 
     // Validar password
-    if (_password.isNotEmpty && _password.length < 4) {
-      passwordError = 'La contraseña debe tener al menos 4 caracteres';
+    if (_password.isNotEmpty) {
+      if (_password.length < 4) {
+        passwordError = 'La contraseña debe tener al menos 4 caracteres';
+      } else if (!RegExp(
+        r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%^&*(),.?":{}|<>]).+$',
+      ).hasMatch(_password)) {
+        passwordError =
+            'La contraseña debe incluir mayúsculas, números y caracteres especiales';
+      }
     }
 
     // Validar confirmPassword
@@ -68,14 +82,18 @@ class RegisterCubit extends Cubit<RegisterState> {
     }
 
     // Emitir estado de validación solo si hay errores
-    if (usernameError != null || emailError != null || 
-        passwordError != null || confirmPasswordError != null) {
-      emit(RegisterValidationError(
-        usernameError: usernameError,
-        emailError: emailError,
-        passwordError: passwordError,
-        confirmPasswordError: confirmPasswordError,
-      ));
+    if (usernameError != null ||
+        emailError != null ||
+        passwordError != null ||
+        confirmPasswordError != null) {
+      emit(
+        RegisterValidationError(
+          usernameError: usernameError,
+          emailError: emailError,
+          passwordError: passwordError,
+          confirmPasswordError: confirmPasswordError,
+        ),
+      );
     } else if (state is RegisterValidationError) {
       // Si no hay errores y el estado anterior era de error, volver a inicial
       emit(const RegisterInitial());
@@ -100,19 +118,21 @@ class RegisterCubit extends Cubit<RegisterState> {
 
       emit(RegisterSuccess(user: user));
     } catch (e) {
-      emit(RegisterError(message: e.toString().replaceFirst('Exception: ', '')));
+      emit(
+        RegisterError(message: e.toString().replaceFirst('Exception: ', '')),
+      );
     }
   }
 
   // Verificar si se puede enviar el formulario
   bool _canSubmit() {
     return _username.trim().isNotEmpty &&
-           _email.trim().isNotEmpty &&
-           _password.isNotEmpty &&
-           _confirmPassword.isNotEmpty &&
-           _isValidEmail(_email) &&
-           _password.length >= 4 &&
-           _password == _confirmPassword;
+        _email.trim().isNotEmpty &&
+        _password.isNotEmpty &&
+        _confirmPassword.isNotEmpty &&
+        _isValidEmail(_email) &&
+        _password.length >= 4 &&
+        _password == _confirmPassword;
   }
 
   // Validación de email

@@ -11,6 +11,7 @@ import 'features/contentChapter/presentation/contentChapter_view.dart';
 import 'features/home/presentation/home_view.dart';
 import 'features/login/presentation/login_view.dart';
 import 'features/login/presentation/cubit/login_cubit.dart';
+import 'features/profile/presentation/profile_view.dart';
 import 'features/register/presentation/register_view.dart';
 import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/Login',
+      initialRoute: '/BookDetail',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           
@@ -89,13 +90,21 @@ class MyApp extends StatelessWidget {
 
           case '/ChapterReader':
           final args = settings.arguments as Map<String, dynamic>? ?? {};
-
           return MaterialPageRoute(
             builder: (_) => ChapterReaderScreen(
               chapterId: args['chapterId']?.toString() ?? '1',
               bookTitle: args['bookTitle']?.toString() ?? 'Libro desconocido',
             ),
           );
+
+          case '/Profile':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            
+            return MaterialPageRoute(
+              builder: (_) => ProfileScreen(
+                userId: args['userId']?.toString(),
+              ),
+            );
           
           default:
             return MaterialPageRoute(

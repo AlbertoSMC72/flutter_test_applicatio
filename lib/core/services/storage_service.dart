@@ -8,10 +8,16 @@ abstract class StorageService {
     required String username,
     required String email,
     String? token,
+    String? firebaseToken, // NUEVO
   });
   Future<Map<String, String?>> getUserData();
   Future<void> clearUserData();
   Future<bool> isUserLoggedIn();
+  
+  // Métodos específicos para Firebase token
+  Future<void> saveFirebaseToken(String firebaseToken);
+  Future<String?> getFirebaseToken();
+  Future<void> clearFirebaseToken();
 }
 
 class StorageServiceImpl implements StorageService {
@@ -19,6 +25,7 @@ class StorageServiceImpl implements StorageService {
   static const String _usernameKey = 'username';
   static const String _emailKey = 'email';
   static const String _tokenKey = 'token';
+  static const String _firebaseTokenKey = 'firebase_token'; // NUEVO
 
   @override
   Future<void> saveUserId(String userId) async {
@@ -38,6 +45,7 @@ class StorageServiceImpl implements StorageService {
     required String username,
     required String email,
     String? token,
+    String? firebaseToken, // NUEVO
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userIdKey, userId);
@@ -45,6 +53,9 @@ class StorageServiceImpl implements StorageService {
     await prefs.setString(_emailKey, email);
     if (token != null) {
       await prefs.setString(_tokenKey, token);
+    }
+    if (firebaseToken != null) {
+      await prefs.setString(_firebaseTokenKey, firebaseToken);
     }
   }
 
@@ -56,6 +67,7 @@ class StorageServiceImpl implements StorageService {
       'username': prefs.getString(_usernameKey),
       'email': prefs.getString(_emailKey),
       'token': prefs.getString(_tokenKey),
+      'firebaseToken': prefs.getString(_firebaseTokenKey), // NUEVO
     };
   }
 
@@ -66,11 +78,31 @@ class StorageServiceImpl implements StorageService {
     await prefs.remove(_usernameKey);
     await prefs.remove(_emailKey);
     await prefs.remove(_tokenKey);
+    await prefs.remove(_firebaseTokenKey); // NUEVO
   }
 
   @override
   Future<bool> isUserLoggedIn() async {
     final userId = await getUserId();
     return userId != null && userId.isNotEmpty;
+  }
+
+  // Métodos específicos para Firebase token
+  @override
+  Future<void> saveFirebaseToken(String firebaseToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_firebaseTokenKey, firebaseToken);
+  }
+
+  @override
+  Future<String?> getFirebaseToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_firebaseTokenKey);
+  }
+
+  @override
+  Future<void> clearFirebaseToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_firebaseTokenKey);
   }
 }

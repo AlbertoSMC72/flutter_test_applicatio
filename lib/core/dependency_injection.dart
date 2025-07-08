@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 // Core services
 import '../core/services/storage_service.dart';
+import '../core/services/firebase_service.dart';
 
 // Register feature imports
 import '../features/register/data/datasources/register_api_service.dart';
@@ -87,10 +88,14 @@ void _initLoginFeature() {
   // Use cases
   sl.registerLazySingleton(() => LoginUseCase(sl()));
 
+  // Services
+  sl.registerLazySingleton<FirebaseService>(() => FirebaseServiceImpl());
+
   // Cubits
   sl.registerFactory(() => LoginCubit(
     loginUseCase: sl(),
     storageService: sl(),
+    firebaseService: sl(),
   ));
 }
 

@@ -50,6 +50,10 @@ dependencies:
   get_it: ^7.6.4
   shared_preferences: ^2.5.3
 
+  # Firebase dependencies
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

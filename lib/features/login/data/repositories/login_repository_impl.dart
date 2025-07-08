@@ -11,18 +11,17 @@ class LoginRepositoryImpl implements LoginRepository {
   Future<LoginEntity> loginUser({
     required String email,
     required String password,
+    String? firebaseToken, // NUEVO
   }) async {
     try {
-      // Llamar al API
       final result = await apiService.loginUser(
         email: email,
         password: password,
+        firebaseToken: firebaseToken, // NUEVO
       );
 
-      // Convertir el resultado a Entity
       return result.toEntity();
     } catch (e) {
-      // Re-lanzar la excepción para que sea manejada por el Cubit
       rethrow;
     }
   }

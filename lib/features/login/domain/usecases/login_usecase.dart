@@ -9,6 +9,7 @@ class LoginUseCase {
   Future<LoginEntity> call({
     required String email,
     required String password,
+    String? firebaseToken,
   }) async {
     // Validaciones de negocio
     if (email.trim().isEmpty) {
@@ -30,6 +31,7 @@ class LoginUseCase {
     return await repository.loginUser(
       email: email.trim().toLowerCase(),
       password: password,
+      firebaseToken: firebaseToken,
     );
   }
 

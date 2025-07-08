@@ -1,4 +1,3 @@
-// features/login/presentation/login_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,6 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+    @override
+  void initState() {
+    super.initState();
+    // Solicitar permisos de notificaciones al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LoginCubit>().requestNotificationPermissions();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -34,12 +42,31 @@ class _LoginScreenState extends State<LoginScreen> {
         child: BlocListener<LoginCubit, LoginState>(
           listener: (context, state) {
             if (state is LoginSuccess) {
+              // Mostrar mensaje de éxito
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
                   backgroundColor: Colors.green,
                 ),
               );
+
+              // Mostrar información sobre notificaciones si está disponible
+              if (state.user.firebaseTokenSaved != null && state.user.notificationMessage != null) {
+                Future.delayed(const Duration(seconds: 1), () {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.user.notificationMessage!),
+                        backgroundColor: state.user.firebaseTokenSaved! 
+                            ? Colors.blue 
+                            : Colors.orange,
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                });
+              }
+
               // Navegar al home después del login exitoso
               Navigator.pushReplacementNamed(context, '/Home');
             } else if (state is LoginError) {
@@ -53,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
           child: Stack(
             children: [
-              // Círculo amarillo superior
+              // Círculos decorativos (mantener igual)
               Positioned(
                 top: -screenHeight * 0.12,
                 left: screenWidth * 0.35,

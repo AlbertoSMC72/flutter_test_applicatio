@@ -6,6 +6,7 @@ abstract class LoginApiService {
   Future<LoginModel> loginUser({
     required String email,
     required String password,
+    String? firebaseToken,
   });
 }
 
@@ -28,7 +29,6 @@ class LoginApiServiceImpl implements LoginApiService {
       },
     );
 
-    // Interceptor para logs (opcional, útil para debug)
     dio.interceptors.add(
       LogInterceptor(
         requestBody: true,
@@ -43,17 +43,22 @@ class LoginApiServiceImpl implements LoginApiService {
   Future<LoginModel> loginUser({
     required String email,
     required String password,
+    String? firebaseToken, // NUEVO
   }) async {
     try {
+      print('[DEBUG_LOGIN_API] Enviando login con firebaseToken: ${firebaseToken != null}');
+      
       final response = await dio.post(
-        '/users/login',
+        '/api/auth/login', // Endpoint actualizado
         data: LoginModel.loginRequest(
           email: email,
           password: password,
+          firebaseToken: firebaseToken, // NUEVO
         ),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('[DEBUG_LOGIN_API] Respuesta exitosa: ${response.data}');
         return LoginModel.fromJson(response.data);
       } else {
         throw Exception('Error del servidor: ${response.statusCode}');

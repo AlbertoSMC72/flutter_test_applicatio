@@ -3,12 +3,16 @@ class LoginEntity {
   final String? username;
   final String email;
   final String? token;
+  final bool? firebaseTokenSaved;
+  final String? notificationMessage;
 
   const LoginEntity({
     this.id,
     this.username,
     required this.email,
     this.token,
+    this.firebaseTokenSaved,
+    this.notificationMessage,
   });
 
   @override
@@ -18,7 +22,8 @@ class LoginEntity {
         other.id == id &&
         other.username == username &&
         other.email == email &&
-        other.token == token;
+        other.token == token &&
+        other.firebaseTokenSaved == firebaseTokenSaved;
   }
 
   @override
@@ -26,11 +31,12 @@ class LoginEntity {
     return id.hashCode ^
         username.hashCode ^
         email.hashCode ^
-        token.hashCode;
+        token.hashCode ^
+        firebaseTokenSaved.hashCode;
   }
 
   @override
   String toString() {
-    return 'LoginEntity(id: $id, username: $username, email: $email)';
+    return 'LoginEntity(id: $id, username: $username, email: $email, firebaseTokenSaved: $firebaseTokenSaved)';
   }
 }

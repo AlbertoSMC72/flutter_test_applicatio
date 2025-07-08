@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 // Core imports
 import 'core/dependency_injection.dart' as di;
@@ -20,10 +22,18 @@ import 'package:flutter_application_1/features/home/presentation/cubit/home_cubi
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   await di.init();
-  
   await ScreenProtector.protectDataLeakageOn();
+
+  try {
+    // NUEVO: Inicializar Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase inicializado correctamente');
+  } catch (e) {
+    print('❌ Error inicializando Firebase: $e');
+  }
   
   runApp(const MyApp());
 }
@@ -36,7 +46,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Watpato',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/BookDetail',
+      initialRoute: '/Login',
       onGenerateRoute: (settings) {
         switch (settings.name) {
           

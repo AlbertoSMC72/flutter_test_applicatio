@@ -1,15 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../domain/usecases/login_usecase.dart';
 import 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final LoginUseCase loginUseCase;
   final StorageService storageService;
+  final FirebaseService firebaseService;
 
   LoginCubit({
     required this.loginUseCase,
     required this.storageService,
+    required this.firebaseService,
   }) : super(const LoginInitial());
 
   // Campos del formulario
@@ -53,12 +56,11 @@ class LoginCubit extends Cubit<LoginState> {
         passwordError: passwordError,
       ));
     } else if (state is LoginValidationError) {
-      // Si no hay errores y el estado anterior era de error, volver a inicial
       emit(const LoginInitial());
     }
   }
 
-  // Método principal para hacer login
+  // Método principal para hacer login (ACTUALIZADO)
   Future<void> loginUser() async {
     if (!_canSubmit()) {
       return;
@@ -67,23 +69,48 @@ class LoginCubit extends Cubit<LoginState> {
     emit(const LoginLoading());
 
     try {
+      // Obtener Firebase token
+      String? firebaseToken = await firebaseService.getFirebaseToken();
+      print('[DEBUG_LOGIN_CUBIT] Firebase token obtenido: ${firebaseToken != null}');
+
+      // Realizar login
       final user = await loginUseCase.call(
         email: _email,
         password: _password,
+        firebaseToken: firebaseToken, // NUEVO
       );
 
+      // Guardar datos en storage
       await storageService.saveUserData(
         userId: user.id?.toString() ?? '',
         username: user.username ?? '',
         email: _email,
         token: user.token,
+        firebaseToken: firebaseToken, // NUEVO
       );
 
-      print('[DEBUG_LOGIN] Datos guardados - userId: ${user.id}, username: ${user.username}');
+      print('[DEBUG_LOGIN_CUBIT] Datos guardados - userId: ${user.id}, username: ${user.username}');
+      
+      // Mostrar información sobre Firebase token si está disponible
+      if (user.firebaseTokenSaved != null) {
+        print('[DEBUG_LOGIN_CUBIT] Firebase token guardado: ${user.firebaseTokenSaved}');
+        print('[DEBUG_LOGIN_CUBIT] Mensaje: ${user.notificationMessage}');
+      }
 
       emit(LoginSuccess(user: user));
     } catch (e) {
+      print('[DEBUG_LOGIN_CUBIT] Error en login: $e');
       emit(LoginError(message: e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  // Método para solicitar permisos de notificaciones
+  Future<void> requestNotificationPermissions() async {
+    try {
+      await firebaseService.requestPermission();
+      await firebaseService.setupTokenRefreshListener();
+    } catch (e) {
+      print('[DEBUG_LOGIN_CUBIT] Error configurando Firebase: $e');
     }
   }
 

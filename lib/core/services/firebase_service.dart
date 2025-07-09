@@ -1,19 +1,30 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 abstract class FirebaseService {
   Future<String?> getFirebaseToken();
   Future<void> requestPermission();
   Future<void> setupTokenRefreshListener();
+  Future<void> initializeNotifications();
   bool get isFirebaseAvailable;
+  Stream<RemoteMessage> get onMessageOpenedApp;
+  Stream<RemoteMessage> get onMessage;
 }
 
 class FirebaseServiceImpl implements FirebaseService {
   FirebaseMessaging? _firebaseMessaging;
   bool _isInitialized = false;
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   bool get isFirebaseAvailable => _isInitialized;
+
+  @override
+  Stream<RemoteMessage> get onMessageOpenedApp => FirebaseMessaging.onMessageOpenedApp;
+
+  @override
+  Stream<RemoteMessage> get onMessage => FirebaseMessaging.onMessage;
 
   FirebaseServiceImpl() {
     _initializeFirebase();
@@ -21,15 +32,9 @@ class FirebaseServiceImpl implements FirebaseService {
 
   void _initializeFirebase() {
     try {
-      // Verificar si Firebase está disponible
-      if (Firebase.apps.isNotEmpty) {
-        _firebaseMessaging = FirebaseMessaging.instance;
-        _isInitialized = true;
-        print('[DEBUG_FIREBASE] Firebase inicializado correctamente');
-      } else {
-        print('[DEBUG_FIREBASE] Firebase no está disponible');
-        _isInitialized = false;
-      }
+      _firebaseMessaging = FirebaseMessaging.instance;
+      _isInitialized = true;
+      print('[DEBUG_FIREBASE] Firebase Messaging inicializado correctamente');
     } catch (e) {
       print('[DEBUG_FIREBASE] Error inicializando Firebase: $e');
       _isInitialized = false;
@@ -93,4 +98,70 @@ class FirebaseServiceImpl implements FirebaseService {
       print('[DEBUG_FIREBASE] Error configurando listener: $e');
     }
   }
+
+  @override
+  Future<void> initializeNotifications() async {
+    if (!_isInitialized) return;
+
+    // Initialize local notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      // iOS: initializationSettingsIOS, // Add if you need iOS support
+    );
+
+    await _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Handle notification tap
+      },
+    );
+
+    // Set up foreground notification handler
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Got a message whilst in the foreground!');
+      print('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        print('Message also contained a notification: ${message.notification}');
+        _showNotification(message);
+      }
+    });
+
+    // Handle background messages
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  Future<void> _showNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'high_importance_channel', // channel id
+      'High Importance Notifications', // channel name
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      // iOS: iOSPlatformChannelSpecifics, // Add if you need iOS support
+    );
+
+    await _flutterLocalNotificationsPlugin.show(
+      0,
+      message.notification?.title,
+      message.notification?.body,
+      platformChannelSpecifics,
+      payload: message.data.toString(),
+    );
+  }
+}
+
+// Top-level background message handler
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message: ${message.messageId}");
+  // You can handle background notifications here
 }

@@ -15,7 +15,7 @@ class RegisterApiServiceImpl implements RegisterApiService {
 
   void _setupDio() {
     dio.options = BaseOptions(
-      baseUrl: 'https://393s0v9z-3000.usw3.devtunnels.ms',
+      baseUrl: 'https://userauthenticationservicewatpato-production.up.railway.app/',
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
@@ -40,7 +40,7 @@ class RegisterApiServiceImpl implements RegisterApiService {
   Future<UserModel> registerUser(UserModel user) async {
     try {
       final response = await dio.post(
-        '/users',
+        '/api/auth/register',
         data: user.toJson(),
       );
 

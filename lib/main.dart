@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/core/services/firebase_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,11 +27,21 @@ void main() async {
   await ScreenProtector.protectDataLeakageOn();
 
   try {
-    // NUEVO: Inicializar Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print('✅ Firebase inicializado correctamente');
+    
+    // Initialize Firebase notifications service
+    final firebaseService = di.sl<FirebaseServiceImpl>();
+    await firebaseService.requestPermission();
+    await firebaseService.initializeNotifications();
+    await firebaseService.setupTokenRefreshListener();
+    
+    // Get and print the token (for debugging)
+    final token = await firebaseService.getFirebaseToken();
+    print('Firebase Messaging Token: $token');
+    
   } catch (e) {
     print('❌ Error inicializando Firebase: $e');
   }

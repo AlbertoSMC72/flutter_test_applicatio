@@ -19,7 +19,7 @@ class LoginApiServiceImpl implements LoginApiService {
 
   void _setupDio() {
     dio.options = BaseOptions(
-      baseUrl: 'https://393s0v9z-3000.usw3.devtunnels.ms',
+      baseUrl: 'https://userauthenticationservicewatpato-production.up.railway.app/',
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),

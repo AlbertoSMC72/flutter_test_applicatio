@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/image_utils.dart';
-
+import '../../domain/entities/genre_entity.dart';
 import '../../domain/usecases/books_usecases.dart';
 import 'books_state.dart';
 
@@ -79,7 +78,7 @@ class BooksCubit extends Cubit<BooksState> {
       await Future.delayed(const Duration(milliseconds: 100));
       
       final genres = await getAllGenresUseCase.call();
-      _availableGenres = genres as List<GenreEntity>;
+      _availableGenres = genres;
       print('[DEBUG_CUBIT] Géneros cargados: ${genres.length}');
       
       await Future.delayed(const Duration(milliseconds: 100));
@@ -166,16 +165,14 @@ class BooksCubit extends Cubit<BooksState> {
     }
   }
 
-  // Remover imagen de portada
-  void removeCoverImage() {
-    _selectedCoverImageBase64 = null;
-    
-    emit(BooksFormState(
-      genres: _availableGenres,
-      isLoadingGenres: false,
-      isCreatingBook: false,
-      selectedCoverImage: _selectedCoverImageBase64,
-    ));
+  // Establecer imagen de portada directamente (para usar desde el modal)
+  void setCoverImageBase64(String? base64Image) {
+    _selectedCoverImageBase64 = base64Image;
+  }
+
+  // Limpiar géneros seleccionados
+  void clearSelectedGenres() {
+    _selectedGenreIds.clear();
   }
 
   // Crear nuevo libro

@@ -1,4 +1,4 @@
-// core/utils/image_utils.dart
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -30,7 +30,7 @@ class ImageUtils {
       final base64String = base64Encode(compressedBytes);
       return base64String;
     } catch (e) {
-      print('Error al convertir imagen a base64: $e');
+      debugPrint('Error al convertir imagen a base64: $e');
       return null;
     }
   }
@@ -51,7 +51,7 @@ class ImageUtils {
       final bytes = base64Decode(cleanBase64);
       return MemoryImage(bytes);
     } catch (e) {
-      print('Error al convertir base64 a imagen: $e');
+      debugPrint('Error al convertir base64 a imagen: $e');
       return null;
     }
   }
@@ -144,16 +144,18 @@ class ImageUtils {
       }
       return null;
     } catch (e) {
-      print('Error al seleccionar imagen: $e');
+      debugPrint('Error al seleccionar imagen: $e');
       return null;
     }
   }
 
   /// Muestra diálogo para seleccionar fuente de imagen
   static Future<File?> showImageSourceDialog(BuildContext context) async {
-    return await showDialog<File?>(
+    final completer = Completer<File?>();
+    
+    showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
           title: const Text(
@@ -170,9 +172,13 @@ class ImageUtils {
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () async {
-                  Navigator.pop(context);
-                  final file = await pickImage(source: ImageSource.gallery);
-                  Navigator.pop(context, file);
+                  Navigator.pop(dialogContext);
+                  try {
+                    final file = await pickImage(source: ImageSource.gallery);
+                    completer.complete(file);
+                  } catch (e) {
+                    completer.complete(null);
+                  }
                 },
               ),
               ListTile(
@@ -182,16 +188,23 @@ class ImageUtils {
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () async {
-                  Navigator.pop(context);
-                  final file = await pickImage(source: ImageSource.camera);
-                  Navigator.pop(context, file);
+                  Navigator.pop(dialogContext);
+                  try {
+                    final file = await pickImage(source: ImageSource.camera);
+                    completer.complete(file);
+                  } catch (e) {
+                    completer.complete(null);
+                  }
                 },
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                completer.complete(null);
+              },
               child: const Text(
                 'Cancelar',
                 style: TextStyle(color: Colors.grey),
@@ -201,6 +214,8 @@ class ImageUtils {
         );
       },
     );
+    
+    return completer.future;
   }
 
   /// Comprimir imagen si excede el tamaño máximo
@@ -223,7 +238,7 @@ class ImageUtils {
       final compressedBytes = img.encodeJpg(image, quality: 85);
       return Uint8List.fromList(compressedBytes);
     } catch (e) {
-      print('Error al comprimir imagen: $e');
+      debugPrint('Error al comprimir imagen: $e');
       return bytes;
     }
   }

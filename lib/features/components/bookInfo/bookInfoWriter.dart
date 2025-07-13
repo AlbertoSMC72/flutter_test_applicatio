@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/core/utils/image_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class BookInfoWriter extends StatelessWidget {
@@ -14,8 +15,19 @@ class BookInfoWriter extends StatelessWidget {
     required this.synopsis,
     required this.imageUrl,
     required this.tags,
-    required this.onTap,
+    required this.onTap, required bool published, required Null Function() onEdit, required Null Function() onTogglePublish, required Null Function() onDelete,
   }) : super(key: key);
+
+  // Método para obtener un ImageProvider no nullable
+  ImageProvider _getImageProvider(String imageString) {
+    // Intentar convertir como base64 primero
+    final memoryImage = ImageUtils.base64ToMemoryImage(imageString);
+    if (memoryImage != null) {
+      return memoryImage;
+    }
+    
+    return NetworkImage(imageString);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +63,7 @@ class BookInfoWriter extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             image: DecorationImage(
-              image: NetworkImage(imageUrl),
+              image: _getImageProvider(imageUrl),
               fit: BoxFit.cover,
             ),
             boxShadow: [
@@ -167,7 +179,7 @@ class BookInfoWriter extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               image: DecorationImage(
-                image: NetworkImage(imageUrl),
+                image: _getImageProvider(imageUrl),
                 fit: BoxFit.cover,
               ),
               boxShadow: [

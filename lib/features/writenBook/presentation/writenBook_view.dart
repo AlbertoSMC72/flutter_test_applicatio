@@ -1,13 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_1/features/components/bookInfo/bookInfoWriter.dart';
 import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
 import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
+import 'package:flutter_application_1/core/utils/image_utils.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/books_cubit.dart';
 import 'cubit/books_state.dart';
-
 
 class UserStoriesScreen extends StatefulWidget {
   const UserStoriesScreen({Key? key}) : super(key: key);
@@ -25,8 +27,8 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar libros del usuario al iniciar
-    context.read<BooksCubit>().getUserBooks();
+    // Cargar libros del usuario al iniciar usando el nuevo método
+    context.read<BooksCubit>().getUserWritingBooks();
   }
 
   @override
@@ -38,15 +40,17 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
   }
 
   void _showCreateBookModal() {
-    
     final booksCubit = context.read<BooksCubit>();
     
     // Variables locales para el modal
     List<GenreEntity> modalGenres = [];
     List<int> modalSelectedGenres = [];
+    List<String> modalNewGenres = [];
     bool isLoadingGenres = false;
     bool isCreatingBook = false;
+    bool isProcessingImage = false;
     String? errorMessage;
+    String? selectedImageBase64;
     
     showModalBottomSheet(
       context: context,
@@ -78,6 +82,188 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 20),
+                  
+                  // Sección de imagen de portada
+                  Text(
+                    'Portada del libro:',
+                    style: GoogleFonts.monomaniacOne(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  
+                  // Contenedor de imagen
+                  GestureDetector(
+                    onTap: isProcessingImage ? null : () async {
+                      try {
+                        // Usar ImagePicker directamente para evitar problemas de contexto
+                        final ImagePicker picker = ImagePicker();
+                        
+                        // Mostrar diálogo simple de selección
+                        final source = await showDialog<ImageSource>(
+                          context: context,
+                          builder: (BuildContext dialogContext) {
+                            return AlertDialog(
+                              backgroundColor: const Color(0xFF2A2A2A),
+                              title: const Text(
+                                'Seleccionar imagen',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.photo_library, color: Color(0xFFECEC3D)),
+                                    title: const Text(
+                                      'Galería',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    onTap: () => Navigator.pop(dialogContext, ImageSource.gallery),
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.camera_alt, color: Color(0xFFECEC3D)),
+                                    title: const Text(
+                                      'Cámara',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    onTap: () => Navigator.pop(dialogContext, ImageSource.camera),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  child: const Text(
+                                    'Cancelar',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (source != null) {
+                          setState(() {
+                            isProcessingImage = true;
+                            errorMessage = null;
+                          });
+                          
+                          // Seleccionar imagen
+                          final XFile? image = await picker.pickImage(
+                            source: source,
+                            imageQuality: 85,
+                            maxWidth: 800,
+                            maxHeight: 600,
+                          );
+                          
+                          if (image != null) {
+                            // Convertir a base64
+                            final imageFile = File(image.path);
+                            final base64Image = await ImageUtils.fileToBase64(imageFile);
+                            
+                            if (base64Image != null) {
+                              setState(() {
+                                selectedImageBase64 = base64Image;
+                                isProcessingImage = false;
+                              });
+                            } else {
+                              setState(() {
+                                isProcessingImage = false;
+                                errorMessage = 'Error al procesar la imagen';
+                              });
+                            }
+                          } else {
+                            setState(() {
+                              isProcessingImage = false;
+                            });
+                          }
+                        }
+                      } catch (e) {
+                        setState(() {
+                          isProcessingImage = false;
+                          errorMessage = 'Error: ${e.toString()}';
+                        });
+                      }
+                    },
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: const Color(0x35606060),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: const Color(0xFFECEC3D),
+                          width: 1,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          if (selectedImageBase64 != null)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: ImageUtils.buildImageWidget(
+                                base64Image: selectedImageBase64,
+                                width: double.infinity,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isProcessingImage ? Icons.hourglass_empty : Icons.add_photo_alternate,
+                                    color: const Color(0xFFECEC3D),
+                                    size: 50,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    isProcessingImage ? 'Procesando imagen...' : 'Tocar para agregar portada',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          
+                          // Botón para remover imagen
+                          if (selectedImageBase64 != null)
+                            Positioned(
+                              top: 10,
+                              right: 10,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedImageBase64 = null;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
                   const SizedBox(height: 20),
                   
                   // Campo título
@@ -117,7 +303,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                         final genres = await booksCubit.getAllGenresUseCase.call();
                         
                         setState(() {
-                          modalGenres = genres as List<GenreEntity>;
+                          modalGenres = genres;
                           isLoadingGenres = false;
                         });
                       } catch (e) {
@@ -164,7 +350,8 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                         itemCount: modalGenres.length,
                         itemBuilder: (context, index) {
                           final genre = modalGenres[index];
-                          final isSelected = modalSelectedGenres.contains(genre.id);
+                          final genreId = genre.id ?? 0;
+                          final isSelected = modalSelectedGenres.contains(genreId);
                           
                           return CheckboxListTile(
                             title: Text(
@@ -175,9 +362,9 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                             onChanged: (bool? value) {
                               setState(() {
                                 if (isSelected) {
-                                  modalSelectedGenres.remove(genre.id);
+                                  modalSelectedGenres.remove(genreId);
                                 } else {
-                                  modalSelectedGenres.add(genre.id!);
+                                  modalSelectedGenres.add(genreId);
                                 }
                               });
                             },
@@ -205,32 +392,19 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          onPressed: () async {
+                          onPressed: () {
                             if (_newGenreController.text.isNotEmpty) {
-                              try {
-                                // USA LA REFERENCIA CAPTURADA
-                                final newGenre = await booksCubit.createGenreUseCase.call(_newGenreController.text);
-                                
-                                setState(() {
-                                  modalGenres.add(newGenre);
-                                });
-                                
+                              setState(() {
+                                modalNewGenres.add(_newGenreController.text.trim());
                                 _newGenreController.clear();
-                                
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Género creado exitosamente'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
+                              });
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Género "${modalNewGenres.last}" agregado'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
                             }
                           },
                           child: const Text(
@@ -240,6 +414,33 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                         ),
                       ],
                     ),
+                    
+                    // Mostrar géneros nuevos agregados
+                    if (modalNewGenres.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Géneros nuevos:',
+                        style: GoogleFonts.monomaniacOne(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Wrap(
+                        spacing: 8,
+                        children: modalNewGenres.map((genre) => Chip(
+                          label: Text(genre),
+                          backgroundColor: const Color(0xFFECEC3D),
+                          labelStyle: const TextStyle(color: Colors.black),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              modalNewGenres.remove(genre);
+                            });
+                          },
+                        )).toList(),
+                      ),
+                    ],
                   ] else if (!isLoadingGenres) ...[
                     const Text(
                       'Presiona "Cargar Géneros" para ver las opciones',
@@ -262,7 +463,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                     onPressed: isCreatingBook ? null : () async {
                       if (_titleController.text.isEmpty || 
                           _descriptionController.text.isEmpty ||
-                          modalSelectedGenres.isEmpty) {
+                          (modalSelectedGenres.isEmpty && modalNewGenres.isEmpty)) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Complete todos los campos y seleccione al menos un género'),
@@ -277,20 +478,22 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                       });
                       
                       try {
-                        // Obtener userId del storage usando la referencia capturada
-                        final userData = await booksCubit.storageService.getUserData();
-                        final userId = userData['userId'];
-                        
-                        if (userId == null || userId.isEmpty) {
-                          throw Exception('Usuario no encontrado. Inicia sesión nuevamente.');
+                        // Limpiar géneros seleccionados y establecer los nuevos
+                        booksCubit.clearSelectedGenres();
+                        for (int genreId in modalSelectedGenres) {
+                          booksCubit.toggleGenreSelection(genreId);
                         }
                         
-                        // Crear el libro usando la referencia capturada
-                        await booksCubit.createBookUseCase.call(
+                        // Establecer la imagen seleccionada si existe
+                        if (selectedImageBase64 != null) {
+                          booksCubit.setCoverImageBase64(selectedImageBase64);
+                        }
+                        
+                        // Crear el libro con imagen
+                        await booksCubit.createBook(
                           title: _titleController.text,
                           description: _descriptionController.text,
-                          authorId: int.parse(userId),
-                          genreIds: modalSelectedGenres,
+                          newGenres: modalNewGenres.isNotEmpty ? modalNewGenres : null,
                         );
                         
                         // Cerrar modal y mostrar éxito
@@ -306,9 +509,6 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                         // Limpiar campos
                         _titleController.clear();
                         _descriptionController.clear();
-                        
-                        // Recargar libros usando la referencia capturada
-                        booksCubit.getUserBooks();
                         
                       } catch (e) {
                         setState(() {
@@ -444,11 +644,39 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                       backgroundColor: Colors.red,
                     ),
                   );
+                } else if (state is BookCreated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is BookUpdated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is BookPublicationToggled) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else if (state is BookDeleted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 }
               },
               child: RefreshIndicator(
                 onRefresh: () async {
-                  context.read<BooksCubit>().getUserBooks();
+                  context.read<BooksCubit>().getUserWritingBooks();
                 },
                 color: const Color(0xFFECEC3D),
                 child: SingleChildScrollView(
@@ -498,8 +726,9 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                                 ),
                               ),
                             );
-                          } else if (state is BooksLoaded) {
-                            if (state.userBooks.books.isEmpty) {
+                          } else if (state is BooksWritingLoaded) {
+                            // AQUÍ ESTÁ EL CAMBIO PRINCIPAL - Usar BooksWritingLoaded en lugar de BooksLoaded
+                            if (state.books.isEmpty) {
                               return Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(50),
@@ -536,61 +765,15 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                             
                             return Column(
                               children: [
-                                /* // Información del usuario
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF2A2A2A),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: const Color(0xFFECEC3D),
-                                        child: Text(
-                                          state.userBooks.user.username[0].toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              state.userBooks.user.username,
-                                              style: GoogleFonts.monomaniacOne(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            Text(
-                                              '${state.userBooks.books.length} historias publicadas',
-                                              style: GoogleFonts.monomaniacOne(
-                                                color: Colors.white70,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ), */
-                                
                                 // Lista de libros
-                                ...state.userBooks.books.map((book) => Padding(
+                                ...state.books.map((book) => Padding(
                                   padding: const EdgeInsets.only(bottom: 30),
                                   child: BookInfoWriter(
                                     title: book.title,
                                     synopsis: book.description,
-                                    imageUrl: 'https://placehold.co/150x200', // Placeholder por ahora
-                                    tags: 'Historia Personal', // Por ahora un tag genérico
+                                    imageUrl: book.coverImage ?? '', // Usar la imagen base64 del libro
+                                    tags: book.genres?.map((g) => g.name).join(', ') ?? 'Sin géneros',
+                                    published: book.published ?? false,
                                     onTap: () {
                                       // Acción al tocar un libro
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -599,6 +782,18 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                                           backgroundColor: const Color(0xFFECEC3D),
                                         ),
                                       );
+                                    },
+                                    onEdit: () {
+                                      _showEditBookModal(book);
+                                    },
+                                    onTogglePublish: () {
+                                      context.read<BooksCubit>().toggleBookPublication(
+                                        book.id!,
+                                        !(book.published ?? false),
+                                      );
+                                    },
+                                    onDelete: () {
+                                      _showDeleteConfirmation(book);
                                     },
                                   ),
                                 )),
@@ -636,7 +831,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                                     const SizedBox(height: 16),
                                     ElevatedButton(
                                       onPressed: () {
-                                        context.read<BooksCubit>().getUserBooks();
+                                        context.read<BooksCubit>().getUserWritingBooks();
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFFECEC3D),
@@ -688,6 +883,65 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditBookModal(book) {
+    // Implementar modal de edición similar al de creación
+    // Por ahora solo mostrar mensaje
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Función de edición para: ${book.title}'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(book) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: Text(
+            'Eliminar libro',
+            style: GoogleFonts.monomaniacOne(
+              color: Colors.white,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres eliminar "${book.title}"? Esta acción no se puede deshacer.',
+            style: GoogleFonts.monomaniacOne(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.monomaniacOne(
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<BooksCubit>().deleteBook(book.id!);
+              },
+              child: Text(
+                'Eliminar',
+                style: GoogleFonts.monomaniacOne(
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

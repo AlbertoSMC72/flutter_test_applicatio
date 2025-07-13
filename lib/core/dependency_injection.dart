@@ -88,15 +88,8 @@ void _initLoginFeature() {
   // Use cases
   sl.registerLazySingleton(() => LoginUseCase(sl()));
 
-  // Services
-  sl.registerLazySingleton<FirebaseService>(() => FirebaseServiceImpl());
-
   // Cubits
-  sl.registerFactory(() => LoginCubit(
-    loginUseCase: sl(),
-    storageService: sl(),
-    firebaseService: sl(),
-  ));
+  sl.registerFactory(() => LoginCubit(loginUseCase: sl(), storageService: StorageServiceImpl(), firebaseService: FirebaseServiceImpl()));
 }
 
 void _initBooksFeature() {
@@ -112,14 +105,22 @@ void _initBooksFeature() {
 
   // Use cases
   sl.registerLazySingleton(() => GetUserBooksUseCase(sl()));
+  sl.registerLazySingleton(() => GetUserWritingBooksUseCase(sl()));
   sl.registerLazySingleton(() => CreateBookUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateBookUseCase(sl()));
+  sl.registerLazySingleton(() => PublishBookUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteBookUseCase(sl()));
   sl.registerLazySingleton(() => GetAllGenresUseCase(sl()));
   sl.registerLazySingleton(() => CreateGenreUseCase(sl()));
 
   // Cubits
   sl.registerFactory(() => BooksCubit(
     getUserBooksUseCase: sl(),
+    getUserWritingBooksUseCase: sl(),
     createBookUseCase: sl(),
+    updateBookUseCase: sl(),
+    publishBookUseCase: sl(),
+    deleteBookUseCase: sl(),
     getAllGenresUseCase: sl(),
     createGenreUseCase: sl(),
     storageService: sl(),
@@ -141,7 +142,5 @@ void _initHomeFeature() {
   sl.registerLazySingleton(() => GetAllBooksUseCase(sl()));
 
   // Cubits
-  sl.registerFactory(() => HomeCubit(
-    getAllBooksUseCase: sl(),
-  ));
+  sl.registerFactory(() => HomeCubit(getAllBooksUseCase: sl()));
 }

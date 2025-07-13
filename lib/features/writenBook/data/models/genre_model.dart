@@ -8,7 +8,7 @@ class GenreModel extends GenreEntity {
 
   factory GenreModel.fromJson(Map<String, dynamic> json) {
     return GenreModel(
-      id: json['id'],
+      id: json['id'] != null ? int.tryParse(json['id'].toString()) : null,
       name: json['name'] ?? '',
     );
   }

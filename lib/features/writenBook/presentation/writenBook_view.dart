@@ -117,7 +117,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                         final genres = await booksCubit.getAllGenresUseCase.call();
                         
                         setState(() {
-                          modalGenres = genres;
+                          modalGenres = genres as List<GenreEntity>;
                           isLoadingGenres = false;
                         });
                       } catch (e) {

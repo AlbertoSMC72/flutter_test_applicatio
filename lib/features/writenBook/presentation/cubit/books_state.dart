@@ -1,8 +1,9 @@
 // features/writenBook/presentation/cubit/books_state.dart
 import 'package:equatable/equatable.dart';
+import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
 import '../../domain/entities/book_entity.dart';
-import '../../domain/entities/genre_entity.dart';
 import '../../domain/entities/user_books_entity.dart';
+
 
 abstract class BooksState extends Equatable {
   const BooksState();
@@ -26,6 +27,15 @@ class BooksLoaded extends BooksState {
 
   @override
   List<Object?> get props => [userBooks];
+}
+
+class BooksWritingLoaded extends BooksState {
+  final List<BookEntity> books;
+
+  const BooksWritingLoaded({required this.books});
+
+  @override
+  List<Object?> get props => [books];
 }
 
 class BooksError extends BooksState {
@@ -53,6 +63,41 @@ class BookCreated extends BooksState {
 
   @override
   List<Object?> get props => [book, message];
+}
+
+class BookUpdated extends BooksState {
+  final BookEntity book;
+  final String message;
+
+  const BookUpdated({
+    required this.book,
+    this.message = 'Libro actualizado exitosamente',
+  });
+
+  @override
+  List<Object?> get props => [book, message];
+}
+
+class BookPublicationToggled extends BooksState {
+  final BookEntity book;
+  final String message;
+
+  const BookPublicationToggled({
+    required this.book,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [book, message];
+}
+
+class BookDeleted extends BooksState {
+  final String message;
+
+  const BookDeleted({required this.message});
+
+  @override
+  List<Object?> get props => [message];
 }
 
 class BookCreationError extends BooksState {
@@ -119,12 +164,16 @@ class BooksFormState extends BooksState {
   final List<GenreEntity> genres;
   final bool isLoadingGenres;
   final bool isCreatingBook;
+  final bool isProcessingImage;
+  final String? selectedCoverImage; // Base64 string
   final String? formError;
 
   const BooksFormState({
     this.genres = const [],
     this.isLoadingGenres = false,
     this.isCreatingBook = false,
+    this.isProcessingImage = false,
+    this.selectedCoverImage,
     this.formError,
   });
 
@@ -132,16 +181,27 @@ class BooksFormState extends BooksState {
     List<GenreEntity>? genres,
     bool? isLoadingGenres,
     bool? isCreatingBook,
+    bool? isProcessingImage,
+    String? selectedCoverImage,
     String? formError,
   }) {
     return BooksFormState(
       genres: genres ?? this.genres,
       isLoadingGenres: isLoadingGenres ?? this.isLoadingGenres,
       isCreatingBook: isCreatingBook ?? this.isCreatingBook,
+      isProcessingImage: isProcessingImage ?? this.isProcessingImage,
+      selectedCoverImage: selectedCoverImage ?? this.selectedCoverImage,
       formError: formError,
     );
   }
 
   @override
-  List<Object?> get props => [genres, isLoadingGenres, isCreatingBook, formError];
+  List<Object?> get props => [
+    genres, 
+    isLoadingGenres, 
+    isCreatingBook, 
+    isProcessingImage,
+    selectedCoverImage,
+    formError
+  ];
 }

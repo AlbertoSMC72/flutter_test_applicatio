@@ -1,4 +1,9 @@
 // core/dependency_injection.dart
+import 'package:flutter_application_1/core/consts/api_urls.dart';
+import 'package:flutter_application_1/features/profile/data/datasourcers/profile_api_service.dart';
+import 'package:flutter_application_1/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
+import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 
@@ -37,8 +42,71 @@ import '../features/home/presentation/cubit/home_cubit.dart';
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
-  // External dependencies
-  sl.registerLazySingleton(() => Dio());
+  sl.registerLazySingleton<Dio>(() {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: ApiUrls.apiUrlAuth,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+  dio.interceptors.add(LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+    error: true,
+    logPrint: (log) => print('[LOGIN_DIO] $log'),
+  ));
+  return dio;
+}, instanceName: 'authDio');
+
+sl.registerLazySingleton<Dio>(() {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: ApiUrls.apiUrlBooks,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+  dio.interceptors.add(LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+    error: true,
+    logPrint: (log) => print('[BOOKS_DIO] $log'),
+  ));
+  return dio;
+}, instanceName: 'booksDio');
+
+sl.registerLazySingleton<Dio>(() {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: ApiUrls.apiUrlProfile,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+  dio.interceptors.add(LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+    error: true,
+    logPrint: (log) => print('[PROFILE_DIO] $log'),
+  ));
+  return dio;
+}, instanceName: 'profileDio');
 
   // Core services
   sl.registerLazySingleton<StorageService>(() => StorageServiceImpl());
@@ -54,12 +122,15 @@ Future<void> init() async {
   
   // Home feature
   _initHomeFeature();
+
+  // Profile feature
+  _initProfileFeature();
 }
 
 void _initRegisterFeature() {
   // Data sources
   sl.registerLazySingleton<RegisterApiService>(
-    () => RegisterApiServiceImpl(dio: sl()),
+    () => RegisterApiServiceImpl(dio: sl(instanceName: 'authDio')),
   );
 
   // Repositories
@@ -77,7 +148,7 @@ void _initRegisterFeature() {
 void _initLoginFeature() {
   // Data sources
   sl.registerLazySingleton<LoginApiService>(
-    () => LoginApiServiceImpl(dio: sl()),
+    () => LoginApiServiceImpl(dio: sl(instanceName: 'authDio')),
   );
 
   // Repositories
@@ -95,7 +166,7 @@ void _initLoginFeature() {
 void _initBooksFeature() {
   // Data sources
   sl.registerLazySingleton<BooksApiService>(
-    () => BooksApiServiceImpl(dio: sl()),
+    () => BooksApiServiceImpl(dio: sl( instanceName: 'booksDio')),
   );
 
   // Repositories
@@ -130,7 +201,7 @@ void _initBooksFeature() {
 void _initHomeFeature() {
   // Data sources
   sl.registerLazySingleton<HomeApiService>(
-    () => HomeApiServiceImpl(dio: sl()),
+    () => HomeApiServiceImpl(dio: sl( instanceName: 'booksDio')),
   );
 
   // Repositories
@@ -143,4 +214,23 @@ void _initHomeFeature() {
 
   // Cubits
   sl.registerFactory(() => HomeCubit(getAllBooksUseCase: sl()));
+}
+
+void _initProfileFeature() {
+
+  // Data sources
+  sl.registerLazySingleton<ProfileApiService>(
+    () => ProfileApiServiceImpl(dio: sl( instanceName: 'profileDio')),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(apiService: sl()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetProfileUseCase(repository: sl()));
+  sl.registerLazySingleton(() => UpdateProfileUseCase(repository: sl()));
+  sl.registerLazySingleton(() => UpdateProfilePictureUseCase(repository: sl()));
+  sl.registerLazySingleton(() => UpdateBannerUseCase(repository: sl()));
 }

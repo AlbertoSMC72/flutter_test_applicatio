@@ -9,31 +9,7 @@ abstract class HomeApiService {
 class HomeApiServiceImpl implements HomeApiService {
   final Dio dio;
 
-  HomeApiServiceImpl({Dio? dio}) : dio = dio ?? Dio() {
-    _setupDio();
-  }
-
-  void _setupDio() {
-    dio.options = BaseOptions(
-      baseUrl: 'https://393s0v9z-3000.usw3.devtunnels.ms',
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        logPrint: (log) => print('[HOME_DIO] $log'),
-      ),
-    );
-  }
+  HomeApiServiceImpl({required this.dio});
 
   @override
   Future<List<HomeBookModel>> getAllBooks() async {

@@ -1,5 +1,7 @@
 // lib/features/profile/presentation/profile_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
+import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
@@ -21,6 +23,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController searchController = TextEditingController();
   final StorageService _storageService = di.sl<StorageService>();
+  final GetProfileUseCase _getProfileUseCase = di.sl<GetProfileUseCase>();
   
   // Estados de la pantalla
   bool _isLoading = true;
@@ -38,12 +41,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _bannerImageUrl = '';
   int _friendsCount = 0;
   int _followersCount = 0;
-  List<String> _favoriteGenres = [];
+  List<Genre> _favoriteGenres = [];
 
   @override
   void initState() {
     super.initState();
-    _loadProfileData();
+    _loadProfileData(); 
   }
 
   @override
@@ -70,15 +73,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await Future.delayed(const Duration(seconds: 1));
       
       if (_isOwnProfile) {
-        // Datos del perfil propio (desde storage + backend)
-        _username = userData['username'] ?? 'Mon mundo';
-        _friendCode = '#CODE';
-        _bio = 'Lorem ipsum dolor sit amet consectetur. Malesuada tristique arcu feugiat donec semper platea.';
-        _profileImageUrl = '';
-        _bannerImageUrl = 'https://placehold.co/411x163';
-        _friendsCount = 6;
-        _followersCount = 12;
-        _favoriteGenres = ['ROMANCE', 'SCI-FI', 'AUTO AYUDA', 'HORROR', 'POLITICA', 'FAN FIC', 'DRAMA', 'AVENTURA', 'FANTASÍA', 'THRILLER', 'MISTERIO', 'COMEDIA'];
+        final profile = await _getProfileUseCase.call(_currentUserId);
+        _username = profile.username;
+        _bio = profile.biography ?? '';
+        _profileImageUrl = profile.profilePicture ?? '';
+        _bannerImageUrl = profile.banner ?? '';
+        _friendsCount = profile.stats.friendsCount ?? 0;
+        _followersCount = profile.stats.followersCount ?? 0;
+        _favoriteGenres = profile.favoriteGenres;
       } else {
         // Datos de perfil ajeno (desde backend)
         _username = _getStaticUserData(_profileUserId)['username'];
@@ -88,7 +90,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _bannerImageUrl = _getStaticUserData(_profileUserId)['bannerImageUrl'];
         _friendsCount = _getStaticUserData(_profileUserId)['friendsCount'];
         _followersCount = _getStaticUserData(_profileUserId)['followersCount'];
-        _favoriteGenres = List<String>.from(_getStaticUserData(_profileUserId)['favoriteGenres']);
+        _favoriteGenres = _getStaticUserData(_profileUserId)['favoriteGenres']
+            .map((genre) => Genre(id: genre, name: genre))
+            .toList();
         
         // Verificar si ya estamos siguiendo a este usuario
         _isFollowed = await _checkIfFollowing(_profileUserId);
@@ -335,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() {
                           _username = usernameController.text;
                           _bio = bioController.text;
-                          _favoriteGenres = editableGenres;
+                          _favoriteGenres = editableGenres.cast<Genre>();
                         });
                         
                         Navigator.pop(modalContext);
@@ -586,23 +590,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final List<List<String>> genreRows = [];
     
     // Dividir géneros en grupos de 3 para cada fila
-    for (int i = 0; i < _favoriteGenres.length; i += 6) {
-      // Primera fila (índices 0, 1, 2)
-      List<String> firstRow = [];
-      if (i < _favoriteGenres.length) firstRow.add(_favoriteGenres[i]);
-      if (i + 1 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 1]);
-      if (i + 2 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 2]);
+    // for (int i = 0; i < _favoriteGenres.length; i += 6) {
+    //   // Primera fila (índices 0, 1, 2)
+    //   List<String> firstRow = [];
+    //   if (i < _favoriteGenres.length) firstRow.add(_favoriteGenres[i]);
+    //   if (i + 1 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 1]);
+    //   if (i + 2 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 2]);
       
-      // Segunda fila (índices 3, 4, 5)
-      List<String> secondRow = [];
-      if (i + 3 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 3]);
-      if (i + 4 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 4]);
-      if (i + 5 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 5]);
+    //   // Segunda fila (índices 3, 4, 5)
+    //   List<String> secondRow = [];
+    //   if (i + 3 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 3]);
+    //   if (i + 4 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 4]);
+    //   if (i + 5 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 5]);
       
-      if (firstRow.isNotEmpty || secondRow.isNotEmpty) {
-        genreRows.add([...firstRow, ...secondRow]);
-      }
-    }
+    //   if (firstRow.isNotEmpty || secondRow.isNotEmpty) {
+    //     genreRows.add([...firstRow, ...secondRow]);
+    //   }
+    // }
     
     // Crear las columnas scrolleables
     return Row(

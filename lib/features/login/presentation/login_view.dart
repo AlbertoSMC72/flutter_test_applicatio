@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/login_cubit.dart';
 import 'cubit/login_state.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-    @override
+  @override
   void initState() {
     super.initState();
     // Solicitar permisos de notificaciones al iniciar
@@ -51,15 +52,17 @@ class _LoginScreenState extends State<LoginScreen> {
               );
 
               // Mostrar información sobre notificaciones si está disponible
-              if (state.user.firebaseTokenSaved != null && state.user.notificationMessage != null) {
+              if (state.user.firebaseTokenSaved != null &&
+                  state.user.notificationMessage != null) {
                 Future.delayed(const Duration(seconds: 1), () {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.user.notificationMessage!),
-                        backgroundColor: state.user.firebaseTokenSaved! 
-                            ? Colors.blue 
-                            : Colors.orange,
+                        backgroundColor:
+                            state.user.firebaseTokenSaved!
+                                ? Colors.blue
+                                : Colors.orange,
                         duration: const Duration(seconds: 3),
                       ),
                     );
@@ -68,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
               }
 
               // Navegar al home después del login exitoso
-              Navigator.pushReplacementNamed(context, '/Home');
+              context.push('/home');
             } else if (state is LoginError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -344,11 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Texto para ir a registro
                       Center(
                         child: GestureDetector(
-                          onTap:
-                              () => Navigator.pushReplacementNamed(
-                                context,
-                                '/Register',
-                              ),
+                          onTap: () => context.push('/register'),
                           child: RichText(
                             text: TextSpan(
                               style: GoogleFonts.monomaniacOne(

@@ -682,7 +682,7 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
               left: 0,
               right: 0,
               child: CustomNavigationBar(
-                currentRoute: '/Writening'
+                currentRoute: '/writening'
               ),
             ),
           ],

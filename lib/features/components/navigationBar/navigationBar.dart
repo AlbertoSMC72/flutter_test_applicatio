@@ -1,59 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class CustomNavigationBar extends StatelessWidget {
   final bool isVisible;
-  final String currentRoute; // Ahora solo necesitas pasar la ruta actual
+  final String currentRoute;
 
   const CustomNavigationBar({
     Key? key,
     this.isVisible = true,
-    required this.currentRoute, // Requerido para saber en qué página estás
+    required this.currentRoute,
   }) : super(key: key);
 
-  // Mapeo de rutas a índices
+  // Determina el índice actual basado en la ruta
   int get currentIndex {
     switch (currentRoute) {
-      case '/Page2':
-        return 0; // Download/Posts
-      case '/Writening':
-        return 1; // Edit/Writing
-      case '/Home':
-        return 2; // Home
-      case '/Test':
-        return 3; // Favorite/Test
-      case '/Login':
-        return 4; // Messages/Login
+      case '/page2':
+        return 0;
+      case '/writening':
+        return 1;
+      case '/home':
+        return 2;
+      case '/test':
+        return 3;
+      case '/login':
+        return 4;
       default:
         return 2; // Home por defecto
     }
   }
 
-  // Navegación automática basada en el índice
   void _navigateToPage(BuildContext context, int index) {
     String route;
+    
     switch (index) {
       case 0:
-        route = '/Page2';
+        route = '/page2';
         break;
       case 1:
-        route = '/Writening';
+        route = '/writening';
         break;
       case 2:
-        route = '/Home';
+        route = '/home';
         break;
       case 3:
-        route = '/Test';
+        route = '/profile';
         break;
       case 4:
-        route = '/Login';
+        route = '/login';
         break;
       default:
-        route = '/Home';
+        route = '/home';
     }
 
-    // Solo navegar si no estamos ya en esa ruta
-    if (currentRoute != route) {
-      Navigator.pushReplacementNamed(context, route);
+    // Solo navegar si no estamos en la misma ruta
+    if (currentRoute.toLowerCase() != route) {
+      context.push(route);
     }
   }
 
@@ -69,7 +70,7 @@ class CustomNavigationBar extends StatelessWidget {
         width: screenWidth,
         height: 80,
         decoration: BoxDecoration(
-          color: const Color(0xFFECEC3D), // Amarillo
+          color: const Color(0xFFECEC3D),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(15),
             topRight: Radius.circular(15),
@@ -104,7 +105,7 @@ class CustomNavigationBar extends StatelessWidget {
                 onTap: () => _navigateToPage(context, 1),
               ),
               
-              // Home
+              // Home (Centro)
               _NavBarItem(
                 icon: Icons.home,
                 index: 2,

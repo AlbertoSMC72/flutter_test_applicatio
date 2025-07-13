@@ -330,8 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // TopBar
-          const CustomTopBar(),
+          CustomTopBar(),
 
           // NavigationBar
           const Positioned(

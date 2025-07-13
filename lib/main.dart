@@ -3,6 +3,7 @@ import 'package:flutter_application_1/core/services/firebase_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
 
 // Core imports
@@ -26,117 +27,124 @@ void main() async {
   await di.init();
   await ScreenProtector.protectDataLeakageOn();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('✅ Firebase inicializado correctamente');
-    
-    // Initialize Firebase notifications service
-    final firebaseService = di.sl<FirebaseServiceImpl>();
-    await firebaseService.requestPermission();
-    await firebaseService.initializeNotifications();
-    await firebaseService.setupTokenRefreshListener();
-    
-    // Get and print the token (for debugging)
-    final token = await firebaseService.getFirebaseToken();
-    print('Firebase Messaging Token: $token');
-    
-  } catch (e) {
-    print('❌ Error inicializando Firebase: $e');
-  }
-  
+  //try {
+  //  await Firebase.initializeApp(
+  //    options: DefaultFirebaseOptions.currentPlatform,
+  //  );
+  //  debugPrint('✅ Firebase inicializado correctamente');
+//
+  //  // Initialize Firebase notifications service
+  //  final firebaseService = di.sl<FirebaseServiceImpl>();
+  //  await firebaseService.requestPermission();
+  //  await firebaseService.initializeNotifications();
+  //  await firebaseService.setupTokenRefreshListener();
+  //  
+  //  // Get and print the token (for debugging)
+  //  final token = await firebaseService.getFirebaseToken();
+  //  debugPrint('Firebase Messaging Token: $token');
+  //} catch (e) {
+  //  debugPrint('❌ Error inicializando Firebase: $e');
+  //}
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Watpato',
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/Login',
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          
-          case '/Home':
-            return MaterialPageRoute(
-              builder: (_) => BlocProvider(
-                create: (context) => di.sl<HomeCubit>(),
-                child: const HomeScreen(),
-              ),
-            );
-          
-          case '/Login':
-            return MaterialPageRoute(
-              builder: (_) => BlocProvider(
+    final GoRouter router = GoRouter(
+      initialLocation: '/login',
+      routes: [
+        GoRoute(
+          path: '/login',
+          name: 'Login',
+          builder:
+              (context, state) => BlocProvider(
                 create: (context) => di.sl<LoginCubit>(),
                 child: const LoginScreen(),
               ),
-            );
-          
-          case '/Register':
-            return MaterialPageRoute(
-              builder: (_) => BlocProvider(
+        ),
+        GoRoute(
+          path: '/register',
+          name: 'Register',
+          builder:
+              (context, state) => BlocProvider(
                 create: (context) => di.sl<RegisterCubit>(),
                 child: const RegisterScreen(),
               ),
-            );
-          
-          case '/Writening':
-            return MaterialPageRoute(
-              builder: (_) => BlocProvider(
+        ),
+        GoRoute(
+          path: '/home',
+          name: 'Home',
+          builder:
+              (context, state) => BlocProvider(
+                create: (context) => di.sl<HomeCubit>(),
+                child: const HomeScreen(),
+              ),
+        ),
+        GoRoute(
+          path: '/writening',
+          name: 'Writening',
+          builder:
+              (context, state) => BlocProvider(
                 create: (context) => di.sl<BooksCubit>(),
                 child: const UserStoriesScreen(),
               ),
-            );
-
-          case '/BookDetail':
-          final args = settings.arguments as Map<String, dynamic>? ?? {};
-          
-          return MaterialPageRoute(
-            builder: (_) => BookDetailScreen(
+        ),
+        GoRoute(
+          path: '/bookDetail',
+          name: 'BookDetail',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return BookDetailScreen(
               bookId: args['bookId']?.toString() ?? '0',
               bookTitle: args['bookTitle']?.toString() ?? 'Título Desconocido',
-              bookDescription: args['bookDescription']?.toString() ?? 'Sin descripción disponible',
-              bookImageUrl: args['bookImageUrl']?.toString() ?? 'https://placehold.co/150x200',
+              bookDescription:
+                  args['bookDescription']?.toString() ??
+                  'Sin descripción disponible',
+              bookImageUrl:
+                  args['bookImageUrl']?.toString() ??
+                  'https://placehold.co/150x200',
               authorName: args['authorName']?.toString() ?? 'Autor Desconocido',
-              genres: args['genres'] is List ? 
-                      List<String>.from(args['genres']) : 
-                      <String>[],
-            ),
-          );
-
-          case '/ChapterReader':
-          final args = settings.arguments as Map<String, dynamic>? ?? {};
-          return MaterialPageRoute(
-            builder: (_) => ChapterReaderScreen(
+              genres:
+                  args['genres'] is List
+                      ? List<String>.from(args['genres'])
+                      : <String>[],
+            );
+          },
+        ),
+        GoRoute(
+          path: '/chapterReader',
+          name: 'ChapterReader',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return ChapterReaderScreen(
               chapterId: args['chapterId']?.toString() ?? '1',
               bookTitle: args['bookTitle']?.toString() ?? 'Libro desconocido',
-            ),
-          );
+            );
+          },
+        ),
+        GoRoute(
+          path: '/profile',
+          name: 'Profile',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return ProfileScreen(userId: args['userId']?.toString());
+          },
+        ),
+      ],
+      errorBuilder:
+          (context, state) => Scaffold(
+            body: Center(child: Text('Ruta no encontrada: ${state.uri.path}')),
+          ),
+    );
 
-          case '/Profile':
-            final args = settings.arguments as Map<String, dynamic>? ?? {};
-            
-            return MaterialPageRoute(
-              builder: (_) => ProfileScreen(
-                userId: args['userId']?.toString(),
-              ),
-            );
-          
-          default:
-            return MaterialPageRoute(
-              builder: (_) => Scaffold(
-                body: Center(
-                  child: Text('Ruta no encontrada: ${settings.name}'),
-                ),
-              ),
-            );
-        }
-      },
+    return MaterialApp.router(
+      title: 'Watpato',
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
     );
   }
 }

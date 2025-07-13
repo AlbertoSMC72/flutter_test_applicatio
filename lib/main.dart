@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/services/firebase_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,7 +28,9 @@ import 'package:flutter_application_1/features/home/presentation/cubit/home_cubi
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
-  await ScreenProtector.protectDataLeakageOn();
+  if (!kIsWeb && Platform.isAndroid) {
+    await ScreenProtector.protectDataLeakageOn();
+  }
 
   //try {
   //  await Firebase.initializeApp(

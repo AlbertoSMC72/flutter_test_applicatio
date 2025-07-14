@@ -5,6 +5,8 @@ import '../models/book_detail_model.dart';
 
 abstract class BookDetailApiService {
   Future<BookDetailModel> getBookDetail(String bookId, String userId);
+  Future<BookDetailModel> updateBook(String bookId, Map<String, dynamic> updates);
+  Future<BookDetailModel> publishBook(String bookId, bool published);
   Future<ChapterModel> addChapter(String bookId, String title);
   Future<bool> toggleChapterPublish(String chapterId, bool published);
   Future<bool> deleteChapter(String chapterId);
@@ -164,6 +166,70 @@ class BookDetailApiServiceImpl implements BookDetailApiService {
 
       if (response.statusCode == 200) {
         return true;
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } on SocketException {
+      throw Exception('Sin conexión a internet');
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  @override
+  Future<BookDetailModel> updateBook(String bookId, Map<String, dynamic> updates) async {
+    try {
+      debugPrint('[DEBUG_BOOK_DETAIL] Actualizando libro: $bookId');
+      
+      final response = await dio.patch(
+        '/api/books/$bookId',
+        data: updates,
+      );
+      
+      debugPrint('[DEBUG_BOOK_DETAIL] Respuesta updateBook: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return BookDetailModel.fromJson(responseData['data']);
+        } else {
+          return BookDetailModel.fromJson(responseData);
+        }
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } on SocketException {
+      throw Exception('Sin conexión a internet');
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  @override
+  Future<BookDetailModel> publishBook(String bookId, bool published) async {
+    try {
+      debugPrint('[DEBUG_BOOK_DETAIL] Publicando libro: $bookId');
+      
+      final response = await dio.patch(
+        '/api/books/$bookId/publish',
+        data: {'published': published},
+      );
+      
+      debugPrint('[DEBUG_BOOK_DETAIL] Respuesta publishBook: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return BookDetailModel.fromJson(responseData['data']);
+        } else {
+          return BookDetailModel.fromJson(responseData);
+        }
       } else {
         throw Exception('Error del servidor: ${response.statusCode}');
       }

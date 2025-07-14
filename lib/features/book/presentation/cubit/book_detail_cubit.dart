@@ -6,6 +6,8 @@ import 'book_detail_state.dart';
 
 class BookDetailCubit extends Cubit<BookDetailState> {
   final GetBookDetailUseCase getBookDetailUseCase;
+  final UpdateBookUseCase updateBookUseCase;
+  final PublishBookUseCase publishBookUseCase;
   final AddChapterUseCase addChapterUseCase;
   final ToggleChapterPublishUseCase toggleChapterPublishUseCase;
   final DeleteChapterUseCase deleteChapterUseCase;
@@ -15,6 +17,8 @@ class BookDetailCubit extends Cubit<BookDetailState> {
 
   BookDetailCubit({
     required this.getBookDetailUseCase,
+    required this.updateBookUseCase,
+    required this.publishBookUseCase,
     required this.addChapterUseCase,
     required this.toggleChapterPublishUseCase,
     required this.deleteChapterUseCase,
@@ -175,6 +179,40 @@ class BookDetailCubit extends Cubit<BookDetailState> {
       if (success) {
         emit(BookDeleted(bookId: _currentBookDetail!.id));
       }
+    } catch (e) {
+      emit(BookDetailError(message: e.toString()));
+    }
+  }
+
+  Future<void> updateBook(Map<String, dynamic> updates) async {
+    if (_currentBookDetail == null) return;
+
+    try {
+      final updatedBook = await updateBookUseCase.call(_currentBookDetail!.id, updates);
+      _currentBookDetail = updatedBook;
+
+      emit(BookUpdated(bookDetail: updatedBook));
+      emit(BookDetailLoaded(
+        bookDetail: _currentBookDetail!,
+        isAuthor: _isAuthor,
+      ));
+    } catch (e) {
+      emit(BookDetailError(message: e.toString()));
+    }
+  }
+
+  Future<void> publishBook(bool published) async {
+    if (_currentBookDetail == null) return;
+
+    try {
+      final updatedBook = await publishBookUseCase.call(_currentBookDetail!.id, published);
+      _currentBookDetail = updatedBook;
+
+      emit(BookPublished(bookId: _currentBookDetail!.id, published: published));
+      emit(BookDetailLoaded(
+        bookDetail: _currentBookDetail!,
+        isAuthor: _isAuthor,
+      ));
     } catch (e) {
       emit(BookDetailError(message: e.toString()));
     }

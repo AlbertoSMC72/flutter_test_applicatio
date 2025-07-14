@@ -81,4 +81,26 @@ class CommentAdded extends BookDetailState {
 
   @override
   List<Object?> get props => [comment];
+}
+
+class BookUpdated extends BookDetailState {
+  final BookDetailEntity bookDetail;
+
+  const BookUpdated({required this.bookDetail});
+
+  @override
+  List<Object?> get props => [bookDetail];
+}
+
+class BookPublished extends BookDetailState {
+  final String bookId;
+  final bool published;
+
+  const BookPublished({
+    required this.bookId,
+    required this.published,
+  });
+
+  @override
+  List<Object?> get props => [bookId, published];
 } 

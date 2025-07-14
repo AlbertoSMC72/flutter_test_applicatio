@@ -61,6 +61,26 @@ class BookDetailRepositoryImpl implements BookDetailRepository {
   }
 
   @override
+  Future<BookDetailEntity> updateBook(String bookId, Map<String, dynamic> updates) async {
+    try {
+      final result = await apiService.updateBook(bookId, updates);
+      return result.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<BookDetailEntity> publishBook(String bookId, bool published) async {
+    try {
+      final result = await apiService.publishBook(bookId, published);
+      return result.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<CommentEntity> addComment(String bookId, String userId, String comment) async {
     try {
       final result = await apiService.addComment(bookId, userId, comment);

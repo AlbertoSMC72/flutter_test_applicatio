@@ -51,6 +51,26 @@ class DeleteBookUseCase {
   }
 }
 
+class UpdateBookUseCase {
+  final BookDetailRepository repository;
+
+  UpdateBookUseCase({required this.repository});
+
+  Future<BookDetailEntity> call(String bookId, Map<String, dynamic> updates) async {
+    return await repository.updateBook(bookId, updates);
+  }
+}
+
+class PublishBookUseCase {
+  final BookDetailRepository repository;
+
+  PublishBookUseCase({required this.repository});
+
+  Future<BookDetailEntity> call(String bookId, bool published) async {
+    return await repository.publishBook(bookId, published);
+  }
+}
+
 class AddCommentUseCase {
   final BookDetailRepository repository;
 

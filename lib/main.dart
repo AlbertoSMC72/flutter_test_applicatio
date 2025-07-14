@@ -105,18 +105,6 @@ class MyApp extends StatelessWidget {
             final args = state.extra as Map<String, dynamic>? ?? {};
             return BookDetailScreen(
               bookId: args['bookId']?.toString() ?? '0',
-              bookTitle: args['bookTitle']?.toString() ?? 'Título Desconocido',
-              bookDescription:
-                  args['bookDescription']?.toString() ??
-                  'Sin descripción disponible',
-              bookImageUrl:
-                  args['bookImageUrl']?.toString() ??
-                  'https://placehold.co/150x200',
-              authorName: args['authorName']?.toString() ?? 'Autor Desconocido',
-              genres:
-                  args['genres'] is List
-                      ? List<String>.from(args['genres'])
-                      : <String>[],
             );
           },
         ),

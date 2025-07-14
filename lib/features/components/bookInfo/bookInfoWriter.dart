@@ -15,7 +15,11 @@ class BookInfoWriter extends StatelessWidget {
     required this.synopsis,
     required this.imageUrl,
     required this.tags,
-    required this.onTap, required bool published, required Null Function() onEdit, required Null Function() onTogglePublish, required Null Function() onDelete,
+    required this.onTap,
+    required bool published,
+    required Null Function() onEdit,
+    required Null Function() onTogglePublish,
+    required Null Function() onDelete,
   }) : super(key: key);
 
   // Método para obtener un ImageProvider no nullable
@@ -25,7 +29,7 @@ class BookInfoWriter extends StatelessWidget {
     if (memoryImage != null) {
       return memoryImage;
     }
-    
+
     return NetworkImage(imageString);
   }
 
@@ -36,14 +40,12 @@ class BookInfoWriter extends StatelessWidget {
       child: Container(
         width: double.infinity,
         constraints: const BoxConstraints(minHeight: 200),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool isSmallScreen = constraints.maxWidth < 400;
-            
-            return isSmallScreen 
+
+            return isSmallScreen
                 ? _buildVerticalLayout(context)
                 : _buildHorizontalLayout(context);
           },
@@ -75,9 +77,9 @@ class BookInfoWriter extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(width: 15),
-        
+
         // Información del libro
         Expanded(
           child: Column(
@@ -108,9 +110,9 @@ class BookInfoWriter extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 10),
-              
+
               // Sinopsis
               Text(
                 synopsis,
@@ -120,15 +122,18 @@ class BookInfoWriter extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              
+
               const SizedBox(height: 15),
-              
+
               // Tags y acciones
               Row(
                 children: [
                   // Tags
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0x35606060),
                       borderRadius: BorderRadius.circular(15),
@@ -149,15 +154,6 @@ class BookInfoWriter extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
-                  const Spacer(),
-                  
-                  // Botones de acción
-                  _buildActionButton(Icons.edit),
-                  const SizedBox(width: 10),
-                  _buildActionButton(Icons.delete),
-                  const SizedBox(width: 10),
-                  _buildActionButton(Icons.add), // <--- Nuevo botón
                 ],
               ),
             ],
@@ -192,9 +188,9 @@ class BookInfoWriter extends StatelessWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 15),
-        
+
         // Título
         Container(
           width: double.infinity,
@@ -220,9 +216,9 @@ class BookInfoWriter extends StatelessWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 10),
-        
+
         // Sinopsis
         Text(
           synopsis,
@@ -232,16 +228,19 @@ class BookInfoWriter extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
         ),
-        
+
         const SizedBox(height: 15),
-        
+
         // Tags y acciones
         Row(
           children: [
             // Tags
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0x35606060),
                   borderRadius: BorderRadius.circular(15),
@@ -263,39 +262,9 @@ class BookInfoWriter extends StatelessWidget {
                 ),
               ),
             ),
-            
-            const SizedBox(width: 10),
-            
-            // Botones de acción
-            _buildActionButton(Icons.add),
-            const SizedBox(width: 10),
-            _buildActionButton(Icons.edit),
-            const SizedBox(width: 10),
-            _buildActionButton(Icons.delete),
-            
-            
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildActionButton(IconData icon) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: const Color(0x35606060),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 4,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Icon(icon, color: Colors.white, size: 20),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_application_1/features/components/bookInfo/bookInfoWrite
 import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
 import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
 import 'package:flutter_application_1/core/utils/image_utils.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/books_cubit.dart';
@@ -775,13 +776,9 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                                     tags: book.genres?.map((g) => g.name).join(', ') ?? 'Sin géneros',
                                     published: book.published ?? false,
                                     onTap: () {
-                                      // Acción al tocar un libro
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Abriendo: ${book.title}'),
-                                          backgroundColor: const Color(0xFFECEC3D),
-                                        ),
-                                      );
+                                      context.push("/bookDetail", extra: {
+                                        'bookId': book.id,
+                                      });
                                     },
                                     onEdit: () {
                                       _showEditBookModal(book);

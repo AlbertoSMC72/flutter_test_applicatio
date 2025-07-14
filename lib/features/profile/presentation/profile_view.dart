@@ -1,5 +1,6 @@
-// lib/features/profile/presentation/profile_view.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
 import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
 import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +10,7 @@ import '../../../core/dependency_injection.dart' as di;
 import '../../components/navigationBar/navigationBar.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String? userId; // ID del usuario a mostrar (null = perfil propio)
+  final String? userId; 
 
   const ProfileScreen({
     Key? key,
@@ -25,13 +26,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final StorageService _storageService = di.sl<StorageService>();
   final GetProfileUseCase _getProfileUseCase = di.sl<GetProfileUseCase>();
   
-  // Estados de la pantalla
   bool _isLoading = true;
   bool _isOwnProfile = false;
   bool _isFollowed = false;
   bool _showFollowOptions = false;
   
-  // Datos del perfil
   String _currentUserId = '';
   String _profileUserId = '';
   String _username = '';
@@ -42,11 +41,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _friendsCount = 0;
   int _followersCount = 0;
   List<Genre> _favoriteGenres = [];
+  List<OwnBook> _ownBooks = [];
+  List<Book> _favoriteBooks = [];
 
   @override
   void initState() {
     super.initState();
-    _loadProfileData(); 
+    _loadProfileData().then((_) {
+      print("username después de cargar: ${_username}");
+    });
   }
 
   @override
@@ -56,105 +59,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
+  try {
+    setState(() {
+      _isLoading = true;
+    });
 
-      // Obtener ID del usuario actual del storage
-      final userData = await _storageService.getUserData();
-      _currentUserId = userData['userId'] ?? '';
-      
-      // Determinar si es perfil propio o ajeno
-      _profileUserId = widget.userId ?? _currentUserId;
-      _isOwnProfile = _profileUserId == _currentUserId;
-
-      // Simular llamada al backend
-      await Future.delayed(const Duration(seconds: 1));
-      
-      if (_isOwnProfile) {
-        final profile = await _getProfileUseCase.call(_currentUserId);
-        _username = profile.username;
-        _bio = profile.biography ?? '';
-        _profileImageUrl = profile.profilePicture ?? '';
-        _bannerImageUrl = profile.banner ?? '';
-        _friendsCount = profile.stats.friendsCount ?? 0;
-        _followersCount = profile.stats.followersCount ?? 0;
-        _favoriteGenres = profile.favoriteGenres;
-      } else {
-        // Datos de perfil ajeno (desde backend)
-        _username = _getStaticUserData(_profileUserId)['username'];
-        _friendCode = _getStaticUserData(_profileUserId)['friendCode'];
-        _bio = _getStaticUserData(_profileUserId)['bio'];
-        _profileImageUrl = _getStaticUserData(_profileUserId)['profileImageUrl'];
-        _bannerImageUrl = _getStaticUserData(_profileUserId)['bannerImageUrl'];
-        _friendsCount = _getStaticUserData(_profileUserId)['friendsCount'];
-        _followersCount = _getStaticUserData(_profileUserId)['followersCount'];
-        _favoriteGenres = _getStaticUserData(_profileUserId)['favoriteGenres']
-            .map((genre) => Genre(id: genre, name: genre))
-            .toList();
-        
-        // Verificar si ya estamos siguiendo a este usuario
-        _isFollowed = await _checkIfFollowing(_profileUserId);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-
-    } catch (e) {
-      print('[DEBUG_PROFILE] Error cargando perfil: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cargar el perfil: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  // Datos estáticos para diferentes usuarios (simula respuesta del backend)
-  Map<String, dynamic> _getStaticUserData(String userId) {
-    final Map<String, Map<String, dynamic>> users = {
-      '1': {
-        'username': 'Ana García',
-        'friendCode': '#ANA123',
-        'bio': 'Escritora apasionada de fantasía y romance. Me encanta crear mundos mágicos llenos de aventura.',
-        'profileImageUrl': '',
-        'bannerImageUrl': 'https://placehold.co/411x163',
-        'friendsCount': 15,
-        'followersCount': 87,
-        'favoriteGenres': ['FANTASÍA', 'ROMANCE', 'AVENTURA', 'DRAMA'],
-      },
-      '2': {
-        'username': 'Carlos López',
-        'friendCode': '#CARLOS456',
-        'bio': 'Fanático de la ciencia ficción y los thrillers. Siempre en busca de la próxima gran historia.',
-        'profileImageUrl': '',
-        'bannerImageUrl': 'https://placehold.co/411x163',
-        'friendsCount': 23,
-        'followersCount': 156,
-        'favoriteGenres': ['SCI-FI', 'THRILLER', 'MISTERIO', 'HORROR'],
-      },
-      '3': {
-        'username': 'María Rodríguez',
-        'friendCode': '#MARIA789',
-        'bio': 'Lectora voraz y crítica literaria. Comparto reseñas y recomendaciones de mis lecturas favoritas.',
-        'profileImageUrl': '',
-        'bannerImageUrl': 'https://placehold.co/411x163',
-        'friendsCount': 8,
-        'followersCount': 234,
-        'favoriteGenres': ['DRAMA', 'BIOGRAFÍA', 'HISTORIA', 'POLITICA'],
-      },
-    };
+    final userData = await _storageService.getUserData();
+    _currentUserId = userData['userId'] ?? '';
     
-    return users[userId] ?? users['1']!; // Default al usuario 1 si no existe
-  }
+    _profileUserId = widget.userId ?? _currentUserId;
+    _isOwnProfile = _profileUserId == _currentUserId;
+    
+    if (_isOwnProfile) {
+      final logUserProfile = await _getProfileUseCase.call(userData['userId']!);
+      
+      // Actualiza las variables de estado
+      setState(() {
+        _username = logUserProfile.username;
+        _friendCode = logUserProfile.friendCode;
+        _bio = logUserProfile.biography ?? '';
+        _profileImageUrl = logUserProfile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
+        _bannerImageUrl = logUserProfile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
+        _friendsCount = logUserProfile.stats?.friendsCount ?? 0;
+        _followersCount = logUserProfile.stats?.followersCount ?? 0;
+        _favoriteGenres = logUserProfile.favoriteGenres;
+        _ownBooks = logUserProfile.ownBooks;
+        _favoriteBooks = logUserProfile.likedBooks;
+      });
+      
+      print("Usuario loggeado: "
+          "ID: ${logUserProfile.id}, "
+          "Nombre: ${logUserProfile.username}, "
+          "Biografía: ${logUserProfile.biography}, "
+          "Imagen de perfil: ${logUserProfile.profilePicture}, "
+          "Banner: ${logUserProfile.banner}, "
+          "Géneros favoritos: ${logUserProfile.favoriteGenres}, "
+          "Libros propios: ${logUserProfile.ownBooks}, "
+          "Libros favoritos: ${logUserProfile.likedBooks}");
+    } else {
+      final profile = await _getProfileUseCase.call(_profileUserId);
+      
+      // Actualiza las variables de estado
+      setState(() {
+        _username = profile.username;
+        _friendCode = profile.friendCode;
+        _bio = profile.biography ?? '';
+        _profileImageUrl = profile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
+        _bannerImageUrl = profile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
+        _friendsCount = profile.stats?.friendsCount ?? 0;
+        _followersCount = profile.stats?.followersCount ?? 0;
+        _favoriteGenres = profile.favoriteGenres;
+      });
+      
+      print("Usuario visitado: "
+          "ID: ${profile.id}, "
+          "Nombre: ${profile.username}, "
+          "Biografía: ${profile.biography}, "
+          "Imagen de perfil: ${profile.profilePicture}, "
+          "Banner: ${profile.banner}, "
+          "Géneros favoritos: ${profile.favoriteGenres.map((g) => g.name).join(', ')}");
+      
+      _isFollowed = await _checkIfFollowing(_profileUserId);
+    }
 
+    setState(() {
+      _isLoading = false;
+    });
+
+  } catch (e) {
+    print('[DEBUG_PROFILE] Error cargando perfil: $e');
+    setState(() {
+      _isLoading = false;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al cargar el perfil: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+  
   Future<bool> _checkIfFollowing(String userId) async {
     // Simular verificación en el backend
     await Future.delayed(const Duration(milliseconds: 500));
@@ -585,80 +571,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildScrollableGenreGrid() {
-    // Crear grupos de géneros para las 2 filas
-    final List<List<String>> genreRows = [];
+Widget _buildScrollableGenreGrid() {
+  // Crear grupos de géneros para las filas (3 por fila)
+  final List<List<Genre>> genreRows = [];
+  
+  // Dividir géneros en grupos de 3
+  for (int i = 0; i < _favoriteGenres.length; i += 3) {
+    List<Genre> row = [];
     
-    // Dividir géneros en grupos de 3 para cada fila
-    // for (int i = 0; i < _favoriteGenres.length; i += 6) {
-    //   // Primera fila (índices 0, 1, 2)
-    //   List<String> firstRow = [];
-    //   if (i < _favoriteGenres.length) firstRow.add(_favoriteGenres[i]);
-    //   if (i + 1 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 1]);
-    //   if (i + 2 < _favoriteGenres.length) firstRow.add(_favoriteGenres[i + 2]);
-      
-    //   // Segunda fila (índices 3, 4, 5)
-    //   List<String> secondRow = [];
-    //   if (i + 3 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 3]);
-    //   if (i + 4 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 4]);
-    //   if (i + 5 < _favoriteGenres.length) secondRow.add(_favoriteGenres[i + 5]);
-      
-    //   if (firstRow.isNotEmpty || secondRow.isNotEmpty) {
-    //     genreRows.add([...firstRow, ...secondRow]);
-    //   }
-    // }
+    // Agregar hasta 3 géneros por fila
+    for (int j = 0; j < 3 && (i + j) < _favoriteGenres.length; j++) {
+      row.add(_favoriteGenres[i + j]);
+    }
     
-    // Crear las columnas scrolleables
-    return Row(
-      children: genreRows.map((columnGenres) {
+    if (row.isNotEmpty) {
+      genreRows.add(row);
+    }
+  }
+  
+  // Crear las filas scrolleables
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Column(
+      children: genreRows.map((rowGenres) {
         return Padding(
-          padding: const EdgeInsets.only(right: 15),
-          child: Column(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
             children: [
-              // Primera fila
-              Row(
-                children: [
-                  if (columnGenres.isNotEmpty) 
-                    _buildScrollableGenreChip(columnGenres[0], width: 117),
-                  if (columnGenres.length > 1) ...[
-                    const SizedBox(width: 5),
-                    _buildScrollableGenreChip(columnGenres[1], width: 77),
-                  ],
-                  if (columnGenres.length > 2) ...[
-                    const SizedBox(width: 5),
-                    _buildScrollableGenreChip(columnGenres[2], width: 127),
-                  ],
-                ],
-              ),
+              // Primer género de la fila
+              if (rowGenres.isNotEmpty) 
+                _buildScrollableGenreChip(rowGenres[0]),
               
-              const SizedBox(height: 6),
+              // Segundo género de la fila
+              if (rowGenres.length > 1) ...[
+                const SizedBox(width: 5),
+                _buildScrollableGenreChip(rowGenres[1]),
+              ],
               
-              // Segunda fila
-              Row(
-                children: [
-                  if (columnGenres.length > 3) 
-                    _buildScrollableGenreChip(columnGenres[3], width: 106),
-                  if (columnGenres.length > 4) ...[
-                    const SizedBox(width: 5),
-                    _buildScrollableGenreChip(columnGenres[4], width: 117),
-                  ],
-                  if (columnGenres.length > 5) ...[
-                    const SizedBox(width: 5),
-                    _buildScrollableGenreChip(columnGenres[5], width: 99),
-                  ],
-                ],
-              ),
+              // Tercer género de la fila
+              if (rowGenres.length > 2) ...[
+                const SizedBox(width: 5),
+                _buildScrollableGenreChip(rowGenres[2]),
+              ],
+              
+              // Espaciado al final de cada fila
+              const SizedBox(width: 15),
             ],
           ),
         );
       }).toList(),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildScrollableGenreChip(String genre, {required double width}) {
-    return Container(
-      width: width,
-      height: 35,
+Widget _buildScrollableGenreChip(Genre genre) {
+  return GestureDetector(
+    onTap: () {
+      print('Tapped on genre: ${genre.name} (ID: ${genre.id})');
+    },
+    child: Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 12), 
       decoration: BoxDecoration(
         color: AppColors.withOpacity(AppColors.surfaceLight, 0.2),
         borderRadius: BorderRadius.circular(15),
@@ -672,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Center(
         child: Text(
-          '#$genre',
+          '#${genre.name}',
           textAlign: TextAlign.center,
           style: GoogleFonts.monomaniacOne(
             color: AppColors.textPrimary,
@@ -681,8 +654,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildFollowOption(String option) {
     IconData icon;
@@ -780,7 +754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 163,
                           decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: NetworkImage(_bannerImageUrl),
+                            image: Image.memory(base64Decode(_bannerImageUrl)).image,
                             fit: BoxFit.cover,
                           ),
                           ),
@@ -867,8 +841,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: _profileImageUrl.isNotEmpty
-                                      ? Image.network(
-                                          _profileImageUrl,
+                                      ? Image.memory(
+                                          base64Decode(_profileImageUrl),
                                           width: 100,
                                           height: 100,
                                           fit: BoxFit.cover,
@@ -1198,7 +1172,144 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                         ),
-                        
+                        const SizedBox(height: 30),
+                        Container(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 200,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Mis Libros',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 10),
+                              
+                              // Contenedor principal de géneros - Scrolleable horizontal
+                              Container(
+                                width: double.infinity,
+                                height: _ownBooks.isEmpty ? 60 : _calculateContainerHeight(_ownBooks.length),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: _ownBooks.isEmpty 
+                                  ? Center(
+                                      child: Text(
+                                        'No has escrito libros',
+                                        style: GoogleFonts.monomaniacOne(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    )
+                                  : SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.all(15),
+                                      child: _buildOwnBooksGrid(_ownBooks),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Container(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header de géneros preferidos
+                              Container(
+                                width: 200,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Libros Favoritos',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 10),
+                              
+                              Container(
+                                width: double.infinity,
+                                height: _favoriteBooks.isEmpty ? 60 : _calculateContainerHeight(_favoriteBooks.length),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: _favoriteBooks.isEmpty 
+                                  ? Center(
+                                      child: Text(
+                                        'No tienes libros favoritos',
+                                        style: GoogleFonts.monomaniacOne(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    )
+                                  : SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.all(15),
+                                      child: _buildLikedBooksGrid(_favoriteBooks),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 100), // Espacio para NavigationBar
                       ],
                     ),
@@ -1222,4 +1333,131 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  // Widget para crear la grilla de libros propios (2 por columna)
+Widget _buildOwnBooksGrid(List<OwnBook> books) {
+  // Dividir libros en grupos de 2 para crear columnas
+  final List<List<OwnBook>> bookColumns = [];
+  
+  for (int i = 0; i < books.length; i += 2) {
+    List<OwnBook> column = [];
+    
+    // Agregar hasta 2 libros por columna
+    for (int j = 0; j < 2 && (i + j) < books.length; j++) {
+      column.add(books[i + j]);
+    }
+    
+    if (column.isNotEmpty) {
+      bookColumns.add(column);
+    }
+  }
+  
+  // Crear las columnas scrolleables
+  return Row(
+    children: bookColumns.map((columnBooks) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 15),
+        child: Column(
+          children: [
+            // Primer libro de la columna
+            if (columnBooks.isNotEmpty)
+              BookImage(
+                imageUrl: "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                title: columnBooks[0].title,
+                category: columnBooks[0].published ? "Publicado" : "Borrador",
+                onTap: () {
+                  print('Tapped on own book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                  // Aquí puedes navegar a la pantalla de edición del libro
+                },
+              ),
+            
+            // Espacio entre libros
+            if (columnBooks.length > 1) const SizedBox(height: 10),
+            
+            // Segundo libro de la columna
+            if (columnBooks.length > 1)
+              BookImage(
+                imageUrl: "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                title: columnBooks[1].title,
+                category: columnBooks[1].published ? "Publicado" : "Borrador",
+                onTap: () {
+                  print('Tapped on own book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                  // Aquí puedes navegar a la pantalla de edición del libro
+                },
+              ),
+          ],
+        ),
+      );
+    }).toList(),
+  );
 }
+
+// Widget para crear la grilla de libros favoritos (2 por columna)
+Widget _buildLikedBooksGrid(List<Book> books) {
+  // Dividir libros en grupos de 2 para crear columnas
+  final List<List<Book>> bookColumns = [];
+  
+  for (int i = 0; i < books.length; i += 2) {
+    List<Book> column = [];
+    
+    // Agregar hasta 2 libros por columna
+    for (int j = 0; j < 2 && (i + j) < books.length; j++) {
+      column.add(books[i + j]);
+    }
+    
+    if (column.isNotEmpty) {
+      bookColumns.add(column);
+    }
+  }
+  
+  // Crear las columnas scrolleables
+  return Row(
+    children: bookColumns.map((columnBooks) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 15),
+        child: Column(
+          children: [
+            // Primer libro de la columna
+            if (columnBooks.isNotEmpty)
+              BookImage(
+                imageUrl: "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                title: columnBooks[0].title,
+                onTap: () {
+                  print('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                  // Aquí puedes navegar a la pantalla de detalles del libro
+                },
+              ),
+            
+            // Espacio entre libros
+            if (columnBooks.length > 1) const SizedBox(height: 10),
+            
+            // Segundo libro de la columna
+            if (columnBooks.length > 1)
+              BookImage(
+                imageUrl: "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                title: columnBooks[1].title,
+                onTap: () {
+                  print('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                  // Aquí puedes navegar a la pantalla de detalles del libro
+                },
+              ),
+          ],
+        ),
+      );
+    }).toList(),
+  );
+}
+
+// Función para calcular la altura del contenedor según el número de libros
+double _calculateContainerHeight(int bookCount) {
+  // Si hay 1 libro, altura para 1 libro + padding
+  // Si hay 2 o más libros, altura para 2 libros + espacio entre ellos + padding
+  if (bookCount == 1) {
+    return 200 + 30; // Altura del libro + padding
+  } else {
+    return 200 + 10 + 200 + 30; // Dos libros + espacio + padding
+  }
+}
+
+}
+

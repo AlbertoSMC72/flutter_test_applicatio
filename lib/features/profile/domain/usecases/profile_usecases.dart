@@ -15,6 +15,20 @@ class GetProfileUseCase {
   }
 }
 
+class GetUserProfileUseCase {
+  final ProfileRepository repository;
+
+  GetUserProfileUseCase({required this.repository});
+
+  Future<Profile> call(String userId) async {
+    try {
+      return await repository.getUserProfile(userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+}
+
 class UpdateProfileUseCase {
   final ProfileRepository repository;
 

@@ -7,6 +7,7 @@ import 'package:flutter_application_1/features/profile/data/models/profile_model
 
 abstract class ProfileApiService {
   Future<Profile> getProfile(String userId);
+  Future<Profile> getUserProfile(String userId);
   Future<Profile> updateProfile(String userId, Map<String, dynamic> updates);
   Future<Profile> updateProfilePicture(String userId, String profilePicture);
   Future<Profile> updateBanner(String userId, String banner);
@@ -21,9 +22,26 @@ class ProfileApiServiceImpl implements ProfileApiService {
   Future<Profile> getProfile(String userId) async {
     try {
       final response = await dio.get(ApiUrls.profile.replaceAll('{userId}', userId));
+      if (response.statusCode == 200) {
+        return Profile.fromJson(response.data['data']);
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } on SocketException {
+      throw Exception('Sin conexión a internet');
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  Future<Profile> getUserProfile(String userId) async {
+    try {
+      final response = await dio.get(ApiUrls.externalUserProfile.replaceAll('{userId}', userId));
 
       if (response.statusCode == 200) {
-        return Profile.fromJson(response.data);
+        return Profile.fromJson(response.data['data']);
       } else {
         throw Exception('Error del servidor: ${response.statusCode}');
       }

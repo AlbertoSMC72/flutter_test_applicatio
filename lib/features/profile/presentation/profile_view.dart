@@ -108,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             "Libros propios: 24{logUserProfile.ownBooks[0].coverImage} ");
             // "Libros favoritos: 24{logUserProfile.likedBooks}");
       } else {
-        final profile = await _getProfileUseCase.call(_profileUserId);
+        final profile = await _profileApiService.getUserProfile(_profileUserId);
         
         // Actualiza las variables de estado
         setState(() {
@@ -124,6 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   id: g.id is int ? g.id : int.tryParse(g.id.toString()),
                   name: g.name))
               .toList();
+          _ownBooks = profile.publishedBooks;
         });
         
         debugPrint("Usuario visitado: "
@@ -610,7 +611,7 @@ Widget _buildScrollableGenreGrid() {
     
     // Agregar hasta 3 géneros por fila
     for (int j = 0; j < 3 && (i + j) < _favoriteGenres.length; j++) {
-      row.add(_favoriteGenres[i + j]);
+      row.add(_favoriteGenres.firstWhere((g) => g.id == _favoriteGenres[i + j].id));
     }
     
     if (row.isNotEmpty) {
@@ -1223,7 +1224,7 @@ Widget _buildScrollableGenreChip(GenreEntity genre) {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'Mis Libros',
+                                    _isOwnProfile ? 'Mis Libros' : 'Libros Publicados',
                                     style: GoogleFonts.monomaniacOne(
                                       color: AppColors.textPrimary,
                                       fontSize: 20,

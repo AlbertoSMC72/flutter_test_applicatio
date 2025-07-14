@@ -83,7 +83,7 @@ class ChapterApiServiceImpl implements ChapterApiService {
       final response = await dio.post(
         '/api/books/chapters/$chapterId/comments',
         data: {
-          'userId': userId,
+          'userId': int.tryParse(userId.toString()),
           'comment': comment,
         },
       );

@@ -10,6 +10,7 @@ class Profile {
   final List<Genre> favoriteGenres;
   final List<Book> likedBooks;
   final List<OwnBook> ownBooks;
+  final List<OwnBook> publishedBooks;
   final ProfileStats stats;
 
   Profile({
@@ -24,6 +25,7 @@ class Profile {
     required this.favoriteGenres,
     required this.likedBooks,
     required this.ownBooks,
+    required this.publishedBooks,
     required this.stats,
   });
 
@@ -43,6 +45,7 @@ class Profile {
         favoriteGenres: _parseGenres(json['favoriteGenres']),
         likedBooks: _parseBooks(json['likedBooks']),
         ownBooks: _parseOwnBooks(json['ownBooks']),
+        publishedBooks: _parseOwnBooks(json['publishedBooks']),
         stats: json['stats'] != null 
             ? ProfileStats.fromJson(json['stats'] as Map<String, dynamic>)
             : ProfileStats.empty(),

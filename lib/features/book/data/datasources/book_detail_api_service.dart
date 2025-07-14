@@ -250,7 +250,7 @@ class BookDetailApiServiceImpl implements BookDetailApiService {
       final response = await dio.post(
         '/api/books/$bookId/comments',
         data: {
-          'userId': userId,
+          'userId': int.tryParse(userId.toString()),
           'comment': comment,
         },
       );

@@ -28,100 +28,126 @@ class Profile {
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
-    return Profile(
-      id: json['id'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      friendCode: json['friendCode'] as String,
-      profilePicture: json['profilePicture'] as String? ?? '',
-      banner: json['banner'] as String? ?? '',
-      biography: json['biography'] as String?,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
-      favoriteGenres: (json['favoriteGenres'] as List<dynamic>?)
-          ?.map((genre) => Genre.fromJson(genre as Map<String, dynamic>))
-          .toList() ?? [],
-      likedBooks: (json['likedBooks'] as List<dynamic>?)
-          ?.map((book) => Book.fromJson(book as Map<String, dynamic>))
-          .toList() ?? [],
-      ownBooks: (json['ownBooks'] as List<dynamic>?)
-          ?.map((book) => OwnBook.fromJson(book as Map<String, dynamic>))
-          .toList() ?? [],
-      stats: ProfileStats.fromJson(json['stats'] as Map<String, dynamic>),
-    );
+    print('[DEBUG] Parsing profile with keys: ${json.keys.toList()}');
+    
+    try {
+      return Profile(
+        id: json['id']?.toString() ?? '',
+        username: json['username']?.toString() ?? '',
+        email: json['email']?.toString() ?? '',
+        friendCode: json['friendCode']?.toString() ?? '',
+        profilePicture: json['profilePicture']?.toString() ?? '',
+        banner: json['banner']?.toString() ?? '',
+        biography: json['biography']?.toString(),
+        createdAt: _parseDateTime(json['createdAt']),
+        favoriteGenres: _parseGenres(json['favoriteGenres']),
+        likedBooks: _parseBooks(json['likedBooks']),
+        ownBooks: _parseOwnBooks(json['ownBooks']),
+        stats: json['stats'] != null 
+            ? ProfileStats.fromJson(json['stats'] as Map<String, dynamic>)
+            : ProfileStats.empty(),
+      );
+    } catch (e) {
+      print('[ERROR] Error parsing profile: $e');
+      rethrow;
+    }
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'username': username,
-      'email': email,
-      'friendCode': friendCode,
-      'profilePicture': profilePicture,
-      'banner': banner,
-      'biography': biography,
-      'createdAt': createdAt.toIso8601String(),
-      'favoriteGenres': favoriteGenres.map((genre) => genre.toJson()).toList(),
-      'likedBooks': likedBooks.map((book) => book.toJson()).toList(),
-      'ownBooks': ownBooks.map((book) => book.toJson()).toList(),
-      'stats': stats.toJson(),
-    };
+  static DateTime _parseDateTime(dynamic dateValue) {
+    if (dateValue == null) return DateTime.now();
+    if (dateValue is String && dateValue.isNotEmpty) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
-  Map<String, dynamic> toUpdateMap() {
-    return {
-      'username': username,
-      'biography': biography,
-      'favoriteGenres': favoriteGenres.map((genre) => genre.id).toList(),
-    };
+  static List<Genre> _parseGenres(dynamic genresData) {
+    if (genresData == null) return [];
+    try {
+      return (genresData as List<dynamic>)
+          .map((genre) => Genre.fromJson(genre as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error parsing genres: $e');
+      return [];
+    }
   }
 
-  Profile copyWith({
-    String? id,
-    String? username,
-    String? email,
-    String? friendCode,
-    String? profilePicture,
-    String? banner,
-    String? biography,
-    DateTime? createdAt,
-    List<Genre>? favoriteGenres,
-    List<Book>? likedBooks,
-    List<OwnBook>? ownBooks,
-    ProfileStats? stats,
-  }) {
-    return Profile(
-      id: id ?? this.id,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      friendCode: friendCode ?? this.friendCode,
-      profilePicture: profilePicture ?? this.profilePicture,
-      banner: banner ?? this.banner,
-      biography: biography ?? this.biography,
-      createdAt: createdAt ?? this.createdAt,
-      favoriteGenres: favoriteGenres ?? this.favoriteGenres,
-      likedBooks: likedBooks ?? this.likedBooks,
-      ownBooks: ownBooks ?? this.ownBooks,
-      stats: stats ?? this.stats,
-    );
+  static List<Book> _parseBooks(dynamic booksData) {
+    if (booksData == null) return [];
+    try {
+      return (booksData as List<dynamic>)
+          .map((book) => Book.fromJson(book as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error parsing books: $e');
+      return [];
+    }
+  }
+
+  static List<OwnBook> _parseOwnBooks(dynamic ownBooksData) {
+    if (ownBooksData == null) return [];
+    try {
+      return (ownBooksData as List<dynamic>)
+          .map((book) => OwnBook.fromJson(book as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('Error parsing own books: $e');
+      return [];
+    }
   }
 
   @override
   String toString() {
-    return 'Profile(id: $id, username: $username, email: $email, friendCode: $friendCode, biography: $biography)';
+    return 'Profile(id: $id, username: $username, email: $email, friendCode: $friendCode)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Profile && other.id == id;
-  }
-
-  @override
-  int get hashCode => id.hashCode;
 }
 
+// ProfileStats Model
+class ProfileStats {
+  final int friendsCount;
+  final int followersCount;
+  final int booksWritten;
+  final int booksLiked;
+
+  ProfileStats({
+    required this.friendsCount,
+    required this.followersCount,
+    required this.booksWritten,
+    required this.booksLiked,
+  });
+
+  ProfileStats.empty()
+      : friendsCount = 0,
+        followersCount = 0,
+        booksWritten = 0,
+        booksLiked = 0;
+
+  factory ProfileStats.fromJson(Map<String, dynamic> json) {
+    try {
+      return ProfileStats(
+        friendsCount: json['friendsCount'] as int? ?? 0,
+        followersCount: json['followersCount'] as int? ?? 0,
+        booksWritten: json['booksWritten'] as int? ?? 0,
+        booksLiked: json['booksLiked'] as int? ?? 0,
+      );
+    } catch (e) {
+      print('Error parsing ProfileStats: $e');
+      return ProfileStats.empty();
+    }
+  }
+
+  @override
+  String toString() {
+    return 'ProfileStats(friends: $friendsCount, followers: $followersCount, written: $booksWritten, liked: $booksLiked)';
+  }
+}
+
+// Genre Model
 class Genre {
   final String id;
   final String name;
@@ -132,32 +158,51 @@ class Genre {
   });
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      id: json['id'] as String,
-      name: json['name'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-    };
-  }
-
-  @override
-  String toString() => 'Genre(id: $id, name: $name)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Genre && other.id == id;
+    try {
+      return Genre(
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+      );
+    } catch (e) {
+      print('Error parsing Genre: $e');
+      return Genre(id: '', name: 'Unknown');
+    }
   }
 
   @override
-  int get hashCode => id.hashCode;
+  String toString() {
+    return 'Genre(id: $id, name: $name)';
+  }
 }
 
+// Author Model
+class Author {
+  final String username;
+
+  Author({
+    required this.username,
+  });
+
+  Author.empty() : username = 'Unknown';
+
+  factory Author.fromJson(Map<String, dynamic> json) {
+    try {
+      return Author(
+        username: json['username']?.toString() ?? 'Unknown',
+      );
+    } catch (e) {
+      print('Error parsing Author: $e');
+      return Author.empty();
+    }
+  }
+
+  @override
+  String toString() {
+    return 'Author(username: $username)';
+  }
+}
+
+// Book Model
 class Book {
   final String id;
   final String title;
@@ -174,38 +219,35 @@ class Book {
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
-    return Book(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      coverImage: json['coverImage'] as String? ?? '',
-      author: Author.fromJson(json['author'] as Map<String, dynamic>),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'coverImage': coverImage,
-      'author': author.toJson(),
-    };
-  }
-
-  @override
-  String toString() => 'Book(id: $id, title: $title, author: ${author.username})';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Book && other.id == id;
+    try {
+      return Book(
+        id: json['id']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        coverImage: json['coverImage']?.toString() ?? '',
+        author: json['author'] != null 
+            ? Author.fromJson(json['author'] as Map<String, dynamic>)
+            : Author.empty(),
+      );
+    } catch (e) {
+      print('Error parsing Book: $e');
+      return Book(
+        id: '',
+        title: 'Unknown',
+        description: '',
+        coverImage: '',
+        author: Author.empty(),
+      );
+    }
   }
 
   @override
-  int get hashCode => id.hashCode;
+  String toString() {
+    return 'Book(id: $id, title: $title, author: ${author.username})';
+  }
 }
 
+// OwnBook Model
 class OwnBook {
   final String id;
   final String title;
@@ -224,107 +266,42 @@ class OwnBook {
   });
 
   factory OwnBook.fromJson(Map<String, dynamic> json) {
-    return OwnBook(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      coverImage: json['coverImage'] as String? ?? '',
-      published: json['published'] as bool,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
-    );
+    try {
+      return OwnBook(
+        id: json['id']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        coverImage: json['coverImage']?.toString() ?? '',
+        published: json['published'] as bool? ?? false,
+        createdAt: _parseDateTime(json['createdAt']),
+      );
+    } catch (e) {
+      print('Error parsing OwnBook: $e');
+      return OwnBook(
+        id: '',
+        title: 'Unknown',
+        description: '',
+        coverImage: '',
+        published: false,
+        createdAt: DateTime.now(),
+      );
+    }
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'coverImage': coverImage,
-      'published': published,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  @override
-  String toString() => 'OwnBook(id: $id, title: $title, published: $published)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is OwnBook && other.id == id;
-  }
-
-  @override
-  int get hashCode => id.hashCode;
-}
-
-class Author {
-  final String username;
-
-  Author({
-    required this.username,
-  });
-
-  factory Author.fromJson(Map<String, dynamic> json) {
-    return Author(
-      username: json['username'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'username': username,
-    };
-  }
-
-  @override
-  String toString() => 'Author(username: $username)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Author && other.username == username;
-  }
-
-  @override
-  int get hashCode => username.hashCode;
-}
-
-class ProfileStats {
-  final int friendsCount;
-  final int followersCount;
-  final int booksWritten;
-  final int booksLiked;
-
-  ProfileStats({
-    required this.friendsCount,
-    required this.followersCount,
-    required this.booksWritten,
-    required this.booksLiked,
-  });
-
-  factory ProfileStats.fromJson(Map<String, dynamic> json) {
-    return ProfileStats(
-      friendsCount: json['friendsCount'] as int,
-      followersCount: json['followersCount'] as int,
-      booksWritten: json['booksWritten'] as int,
-      booksLiked: json['booksLiked'] as int,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'friendsCount': friendsCount,
-      'followersCount': followersCount,
-      'booksWritten': booksWritten,
-      'booksLiked': booksLiked,
-    };
+  static DateTime _parseDateTime(dynamic dateValue) {
+    if (dateValue == null) return DateTime.now();
+    if (dateValue is String && dateValue.isNotEmpty) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
   @override
   String toString() {
-    return 'ProfileStats(friendsCount: $friendsCount, followersCount: $followersCount, booksWritten: $booksWritten, booksLiked: $booksLiked)';
+    return 'OwnBook(id: $id, title: $title, published: $published)';
   }
 }

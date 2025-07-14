@@ -6,6 +6,7 @@ class ApiUrls {
   static const String profileInfo = '/api/profile/info/{userId}';
   static const String profilePicture = '/api/profile/profile-picture/{userId}';
   static const String banner = '/api/profile/banner/{userId}';
+  static const String externalUserProfile = '/api/profile/user/{userId}';
 }
 
 

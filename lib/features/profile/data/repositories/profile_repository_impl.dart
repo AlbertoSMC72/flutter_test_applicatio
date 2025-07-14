@@ -18,6 +18,16 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<Profile> getUserProfile(String userId) async {
+    try {
+      final result = await apiService.getUserProfile(userId);
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<Profile> updateProfile(String userId, Map<String, dynamic> updates) async {
     try {
       final result = await apiService.updateProfile(userId, updates);

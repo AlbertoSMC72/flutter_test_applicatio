@@ -1032,30 +1032,51 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         ),
                         const SizedBox(height: 15),
                         // Autor
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceTransparent,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Por: ${book.author?.username ?? 'Autor Desconocido'}',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.monomaniacOne(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                        GestureDetector(
+                          onTap: () {
+                            if (book.authorId.isNotEmpty) {
+                              GoRouter.of(context).push(
+                                '/profile',
+                                extra: {'userId': book.authorId},
+                              );
+                            }
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 15),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 20,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceTransparent,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowColor,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Por: ${book.author?.username ?? 'Autor Desconocido'}',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.monomaniacOne(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.person,
+                                  color: AppColors.textPrimary,
+                                  size: 16,
+                                ),
+                              ],
                             ),
                           ),
                         ),

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../../../core/services/storage_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 // Clase de datos para los comentarios del capítulo
 class ChapterCommentData {
   final String id;
@@ -238,7 +239,58 @@ class _ChapterReaderScreenState extends State<ChapterReaderScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 20),
+                        // Información del autor del libro
+                        if (chapter.book?.author != null)
+                          Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                // TODO: Necesitamos authorId en la respuesta del backend
+                                // Por ahora solo mostramos el autor sin navegación
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Funcionalidad de navegación al perfil del autor próximamente'),
+                                    backgroundColor: AppColors.primary,
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isDarkTheme 
+                                      ? AppColors.surfaceTransparent 
+                                      : AppColors.surfaceTransparent.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      color: textColor,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Por: ${chapter.book!.author!.username}',
+                                      style: GoogleFonts.cantarell(
+                                        color: textColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: textColor.withOpacity(0.7),
+                                      size: 12,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 20),
                         // Párrafos del capítulo
                         ...chapter.paragraphs.map((p) => Padding(
                           padding: const EdgeInsets.only(bottom: 16, left: 20, right: 20),

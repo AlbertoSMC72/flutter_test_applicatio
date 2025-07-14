@@ -88,14 +88,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
       
       print("Usuario loggeado: "
-          "ID: ${logUserProfile.id}, "
-          "Nombre: ${logUserProfile.username}, "
-          "Biografía: ${logUserProfile.biography}, "
-          "Imagen de perfil: ${logUserProfile.profilePicture}, "
-          "Banner: ${logUserProfile.banner}, "
-          "Géneros favoritos: ${logUserProfile.favoriteGenres}, "
-          "Libros propios: ${logUserProfile.ownBooks}, "
-          "Libros favoritos: ${logUserProfile.likedBooks}");
+          // "ID: ${logUserProfile.id}, "
+          // "Nombre: ${logUserProfile.username}, "
+          // "Biografía: ${logUserProfile.biography}, "
+          // "Imagen de perfil: ${logUserProfile.profilePicture}, "
+          // "Banner: ${logUserProfile.banner}, "
+          // "Géneros favoritos: ${logUserProfile.favoriteGenres}, "
+          "Libros propios: ${logUserProfile.ownBooks[0].coverImage} ");
+          // "Libros favoritos: ${logUserProfile.likedBooks}");
     } else {
       final profile = await _getProfileUseCase.call(_profileUserId);
       
@@ -1362,7 +1362,7 @@ Widget _buildOwnBooksGrid(List<OwnBook> books) {
             // Primer libro de la columna
             if (columnBooks.isNotEmpty)
               BookImage(
-                imageUrl: "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
                 title: columnBooks[0].title,
                 category: columnBooks[0].published ? "Publicado" : "Borrador",
                 onTap: () {
@@ -1377,7 +1377,7 @@ Widget _buildOwnBooksGrid(List<OwnBook> books) {
             // Segundo libro de la columna
             if (columnBooks.length > 1)
               BookImage(
-                imageUrl: "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
                 title: columnBooks[1].title,
                 category: columnBooks[1].published ? "Publicado" : "Borrador",
                 onTap: () {
@@ -1420,7 +1420,7 @@ Widget _buildLikedBooksGrid(List<Book> books) {
             // Primer libro de la columna
             if (columnBooks.isNotEmpty)
               BookImage(
-                imageUrl: "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
                 title: columnBooks[0].title,
                 onTap: () {
                   print('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
@@ -1434,7 +1434,7 @@ Widget _buildLikedBooksGrid(List<Book> books) {
             // Segundo libro de la columna
             if (columnBooks.length > 1)
               BookImage(
-                imageUrl: "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
                 title: columnBooks[1].title,
                 onTap: () {
                   print('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');

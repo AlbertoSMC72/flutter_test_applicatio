@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -33,7 +35,8 @@ class BookImage extends StatelessWidget {
                 height: 200,
                 decoration: ShapeDecoration(
                   image: DecorationImage(
-                    image: NetworkImage(imageUrl),
+                    image: Image.memory(base64Decode(imageUrl)).image, // Cambiado a MemoryImage para evitar problemas de red
+                    // image: NetworkImage(imageUrl),
                     fit: BoxFit.cover,
                   ),
                   shape: RoundedRectangleBorder(

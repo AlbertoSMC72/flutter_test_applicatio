@@ -21,6 +21,7 @@ import 'cubit/book_detail_cubit.dart';
 import 'cubit/book_detail_state.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../../components/searchUserBar/searchUserBar.dart';
+import 'package:go_router/go_router.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
@@ -1199,6 +1200,15 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                           ],
                                         )
                                         : null,
+                                onTap: () {
+                                  GoRouter.of(context).push(
+                                    '/chapterReader',
+                                    extra: {
+                                      'chapterId': chapter.id,
+                                      'bookTitle': book.title,
+                                    },
+                                  );
+                                },
                               ),
                             );
                           },

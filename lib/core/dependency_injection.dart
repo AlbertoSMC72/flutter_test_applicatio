@@ -39,6 +39,13 @@ import '../features/home/domain/repositories/home_repository.dart';
 import '../features/home/domain/usecases/get_all_books_usecase.dart';
 import '../features/home/presentation/cubit/home_cubit.dart';
 
+// Content Chapter feature imports
+import '../features/contentChapter/data/datasources/chapter_api_service.dart';
+import '../features/contentChapter/data/repositories/chapter_repository_impl.dart';
+import '../features/contentChapter/domain/repositories/chapter_repository.dart';
+import '../features/contentChapter/domain/usecases/chapter_usecases.dart';
+import '../features/contentChapter/presentation/cubit/chapter_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
@@ -125,6 +132,9 @@ sl.registerLazySingleton<Dio>(() {
 
   // Profile feature
   _initProfileFeature();
+
+  // Content Chapter feature
+  _initContentChapterFeature();
 }
 
 void _initRegisterFeature() {
@@ -233,4 +243,28 @@ void _initProfileFeature() {
   sl.registerLazySingleton(() => UpdateProfileUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateProfilePictureUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateBannerUseCase(repository: sl()));
+}
+
+void _initContentChapterFeature() {
+  // Data sources
+  sl.registerLazySingleton<ChapterApiService>(
+    () => ChapterApiServiceImpl(dio: sl(instanceName: 'booksDio')),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<ChapterRepository>(
+    () => ChapterRepositoryImpl(apiService: sl()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetChapterDetailUseCase(repository: sl()));
+  sl.registerLazySingleton(() => AddParagraphsUseCase(repository: sl()));
+  sl.registerLazySingleton(() => AddCommentUseCase(repository: sl()));
+
+  // Cubit
+  sl.registerFactory(() => ChapterCubit(
+    getChapterDetailUseCase: sl(),
+    addParagraphsUseCase: sl(),
+    addCommentUseCase: sl(),
+  ));
 }

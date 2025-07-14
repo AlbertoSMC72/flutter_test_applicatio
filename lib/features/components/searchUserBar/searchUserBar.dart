@@ -45,27 +45,43 @@ class _CustomTopBarState extends State<CustomTopBar> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final topPadding = MediaQuery.of(context).padding.top;
+    final orientation = MediaQuery.of(context).orientation;
+
+    // Ajustes según orientación
+    final isLandscape = orientation == Orientation.landscape;
+    final double containerHeight = isLandscape ? 45 : 60;
+    final double iconSize = isLandscape ? 22 : 30;
+    final double userButtonSize = isLandscape ? 40 : 60;
+    final double badgeSize = isLandscape ? 22 : 37;
+    final double fontSize = isLandscape ? 12 : 16;
+    final double badgeFontSize = isLandscape ? 9 : 13;
+    final double horizontalPadding = isLandscape ? 10 : 20;
+    final double verticalPadding = isLandscape ? 5 : 10;
+    final double searchIconPadding = isLandscape ? 8 : 15;
+    final double searchFieldVertical = isLandscape ? 8 : 15;
+    final double searchFieldFontSize = isLandscape ? 13 : 16;
+    final double spaceBetween = isLandscape ? 8 : 15;
 
     return Container(
       width: screenWidth,
       padding: EdgeInsets.fromLTRB(
-        20,
-        topPadding + 10,
-        20,
-        10,
+        horizontalPadding,
+        topPadding + (isLandscape ? 5 : 10),
+        horizontalPadding,
+        verticalPadding,
       ),
       child: Container(
         width: screenWidth,
-        height: 60,
+        height: containerHeight,
         child: Row(
           children: [
             // Barra de búsqueda
             Expanded(
               child: Container(
-                height: 60,
+                height: containerHeight,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF2F2F2),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(isLandscape ? 10 : 15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.25),
@@ -76,12 +92,12 @@ class _CustomTopBarState extends State<CustomTopBar> {
                 ),
                 child: Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 15),
+                    Padding(
+                      padding: EdgeInsets.only(left: searchIconPadding),
                       child: Icon(
                         Icons.search,
                         color: Colors.black54,
-                        size: 30,
+                        size: iconSize,
                       ),
                     ),
                     Expanded(
@@ -93,17 +109,17 @@ class _CustomTopBarState extends State<CustomTopBar> {
                           hintText: widget.searchHint,
                           hintStyle: GoogleFonts.monomaniacOne(
                             color: Colors.black54,
-                            fontSize: 16,
+                            fontSize: searchFieldFontSize,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 15,
-                            vertical: 15,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: searchFieldVertical,
                           ),
                         ),
                         style: GoogleFonts.monomaniacOne(
                           color: Colors.black87,
-                          fontSize: 16,
+                          fontSize: searchFieldFontSize,
                         ),
                       ),
                     ),
@@ -112,7 +128,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
               ),
             ),
             
-            const SizedBox(width: 15),
+            SizedBox(width: spaceBetween),
             
             // Botón de usuario con notificaciones
             Stack(
@@ -120,8 +136,8 @@ class _CustomTopBarState extends State<CustomTopBar> {
                 GestureDetector(
                   onTap: _navigateToProfile,
                   child: Container(
-                    width: 60,
-                    height: 60,
+                    width: userButtonSize,
+                    height: userButtonSize,
                     decoration: BoxDecoration(
                       color: const Color(0xFFECEC3D),
                       shape: BoxShape.circle,
@@ -133,10 +149,10 @@ class _CustomTopBarState extends State<CustomTopBar> {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
                       color: Color(0xFF1E1E1E),
-                      size: 30,
+                      size: iconSize,
                     ),
                   ),
                 ),
@@ -144,11 +160,11 @@ class _CustomTopBarState extends State<CustomTopBar> {
                 // Badge de notificaciones
                 if (widget.notificationCount > 2)
                   Positioned(
-                    right: -8,
-                    bottom: -8,
+                    right: isLandscape ? -5 : -8,
+                    bottom: isLandscape ? -5 : -8,
                     child: Container(
-                      width: 37,
-                      height: 37,
+                      width: badgeSize,
+                      height: badgeSize,
                       decoration: BoxDecoration(
                         color: const Color(0xFFD8292C),
                         shape: BoxShape.circle,
@@ -167,7 +183,7 @@ class _CustomTopBarState extends State<CustomTopBar> {
                               : '${widget.notificationCount}',
                           style: GoogleFonts.monomaniacOne(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: badgeFontSize,
                             fontWeight: FontWeight.w400,
                           ),
                         ),

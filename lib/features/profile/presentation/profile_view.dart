@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
 import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
 import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
@@ -13,9 +14,9 @@ class ProfileScreen extends StatefulWidget {
   final String? userId; 
 
   const ProfileScreen({
-    Key? key,
+    super.key,
     this.userId,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -48,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfileData().then((_) {
-      print("username después de cargar: ${_username}");
+      debugPrint("username después de cargar: $_username");
     });
   }
 
@@ -87,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _favoriteBooks = logUserProfile.likedBooks;
       });
       
-      print("Usuario loggeado: "
+      debugPrint("Usuario loggeado: "
           // "ID: ${logUserProfile.id}, "
           // "Nombre: ${logUserProfile.username}, "
           // "Biografía: ${logUserProfile.biography}, "
@@ -111,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _favoriteGenres = profile.favoriteGenres;
       });
       
-      print("Usuario visitado: "
+      debugPrint("Usuario visitado: "
           "ID: ${profile.id}, "
           "Nombre: ${profile.username}, "
           "Biografía: ${profile.biography}, "
@@ -127,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
   } catch (e) {
-    print('[DEBUG_PROFILE] Error cargando perfil: $e');
+    debugPrint('[DEBUG_PROFILE] Error cargando perfil: $e');
     setState(() {
       _isLoading = false;
     });
@@ -204,13 +205,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _followUser(String userId, String notificationType) async {
     // Simular llamada al backend para seguir usuario
     await Future.delayed(const Duration(milliseconds: 500));
-    print('[DEBUG_PROFILE] Siguiendo usuario $userId con notificaciones: $notificationType');
+    debugPrint('[DEBUG_PROFILE] Siguiendo usuario $userId con notificaciones: $notificationType');
   }
 
   Future<void> _unfollowUser(String userId) async {
     // Simular llamada al backend para dejar de seguir
     await Future.delayed(const Duration(milliseconds: 500));
-    print('[DEBUG_PROFILE] Dejando de seguir usuario $userId');
+    debugPrint('[DEBUG_PROFILE] Dejando de seguir usuario $userId');
   }
 
   void _showEditProfileModal() {
@@ -627,7 +628,7 @@ Widget _buildScrollableGenreGrid() {
 Widget _buildScrollableGenreChip(Genre genre) {
   return GestureDetector(
     onTap: () {
-      print('Tapped on genre: ${genre.name} (ID: ${genre.id})');
+      debugPrint('Tapped on genre: ${genre.name} (ID: ${genre.id})');
     },
     child: Container(
       height: 30,
@@ -1366,8 +1367,8 @@ Widget _buildOwnBooksGrid(List<OwnBook> books) {
                 title: columnBooks[0].title,
                 category: columnBooks[0].published ? "Publicado" : "Borrador",
                 onTap: () {
-                  print('Tapped on own book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
-                  // Aquí puedes navegar a la pantalla de edición del libro
+                  debugPrint('Tapped on own book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                  context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
                 },
               ),
             
@@ -1381,8 +1382,8 @@ Widget _buildOwnBooksGrid(List<OwnBook> books) {
                 title: columnBooks[1].title,
                 category: columnBooks[1].published ? "Publicado" : "Borrador",
                 onTap: () {
-                  print('Tapped on own book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
-                  // Aquí puedes navegar a la pantalla de edición del libro
+                  debugPrint('Tapped on own book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                  context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
                 },
               ),
           ],
@@ -1423,8 +1424,8 @@ Widget _buildLikedBooksGrid(List<Book> books) {
                 imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
                 title: columnBooks[0].title,
                 onTap: () {
-                  print('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
-                  // Aquí puedes navegar a la pantalla de detalles del libro
+                  debugPrint('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                  context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
                 },
               ),
             
@@ -1437,8 +1438,8 @@ Widget _buildLikedBooksGrid(List<Book> books) {
                 imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
                 title: columnBooks[1].title,
                 onTap: () {
-                  print('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
-                  // Aquí puedes navegar a la pantalla de detalles del libro
+                  debugPrint('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                  context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
                 },
               ),
           ],
@@ -1450,8 +1451,6 @@ Widget _buildLikedBooksGrid(List<Book> books) {
 
 // Función para calcular la altura del contenedor según el número de libros
 double _calculateContainerHeight(int bookCount) {
-  // Si hay 1 libro, altura para 1 libro + padding
-  // Si hay 2 o más libros, altura para 2 libros + espacio entre ellos + padding
   if (bookCount == 1) {
     return 200 + 30; // Altura del libro + padding
   } else {

@@ -6,6 +6,7 @@ class HomeBookEntity {
   final String createdAt;
   final int authorId;
   final List<String> genres;
+  final String coverImage;
 
   const HomeBookEntity({
     required this.id,
@@ -14,6 +15,7 @@ class HomeBookEntity {
     required this.createdAt,
     required this.authorId,
     required this.genres,
+    this.coverImage = '',
   });
 
   @override

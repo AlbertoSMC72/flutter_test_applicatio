@@ -7,6 +7,7 @@ import 'package:flutter_application_1/features/components/searchUserBar/searchUs
 import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
 import 'cubit/home_cubit.dart';
 import 'cubit/home_state.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -32,12 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleBookTap(HomeBookEntity book) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Abriendo: ${book.title}'),
-        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-        duration: const Duration(seconds: 2),
-      ),
+    // Navegación al detalle del libro
+    // Usando GoRouter
+    context.pushNamed(
+      'BookDetail',
+      extra: {'bookId': book.id},
     );
   }
 
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: BookImage(
               title: book.title,
               category: book.genres.isNotEmpty ? book.genres.first : 'Sin género',
-              imageUrl: 'https://placehold.co/150x200',
+              imageUrl: book.coverImage ?? '',
               onTap: () => _handleBookTap(book),
             ),
           );

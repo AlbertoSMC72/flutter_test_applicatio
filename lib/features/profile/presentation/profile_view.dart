@@ -9,6 +9,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/dependency_injection.dart' as di;
 import '../../components/navigationBar/navigationBar.dart';
+import '../../../features/writenBook/domain/usecases/books_usecases.dart';
+import '../../../features/writenBook/domain/entities/genre_entity.dart';
+import '../../../features/profile/data/datasourcers/profile_api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId; 
@@ -26,6 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController searchController = TextEditingController();
   final StorageService _storageService = di.sl<StorageService>();
   final GetProfileUseCase _getProfileUseCase = di.sl<GetProfileUseCase>();
+  final GetAllGenresUseCase _getAllGenresUseCase = di.sl<GetAllGenresUseCase>();
+  List<GenreEntity> _allGenres = [];
   
   bool _isLoading = true;
   bool _isOwnProfile = false;
@@ -41,9 +46,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _bannerImageUrl = '';
   int _friendsCount = 0;
   int _followersCount = 0;
-  List<Genre> _favoriteGenres = [];
+  List<GenreEntity> _favoriteGenres = [];
   List<OwnBook> _ownBooks = [];
   List<Book> _favoriteBooks = [];
+  final ProfileApiService _profileApiService = di.sl<ProfileApiService>();
 
   @override
   void initState() {
@@ -60,87 +66,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
-  try {
-    setState(() {
-      _isLoading = true;
-    });
+    try {
+      setState(() {
+        _isLoading = true;
+      });
 
-    final userData = await _storageService.getUserData();
-    _currentUserId = userData['userId'] ?? '';
-    
-    _profileUserId = widget.userId ?? _currentUserId;
-    _isOwnProfile = _profileUserId == _currentUserId;
-    
-    if (_isOwnProfile) {
-      final logUserProfile = await _getProfileUseCase.call(userData['userId']!);
+      final userData = await _storageService.getUserData();
+      _currentUserId = userData['userId'] ?? '';
       
-      // Actualiza las variables de estado
+      _profileUserId = widget.userId ?? _currentUserId;
+      _isOwnProfile = _profileUserId == _currentUserId;
+      
+      if (_isOwnProfile) {
+        final logUserProfile = await _getProfileUseCase.call(userData['userId']!);
+        
+        // Actualiza las variables de estado
+        setState(() {
+          _username = logUserProfile.username;
+          _friendCode = logUserProfile.friendCode;
+          _bio = logUserProfile.biography ?? '';
+          _profileImageUrl = logUserProfile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
+          _bannerImageUrl = logUserProfile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
+          _friendsCount = logUserProfile.stats?.friendsCount ?? 0;
+          _followersCount = logUserProfile.stats?.followersCount ?? 0;
+          _favoriteGenres = (logUserProfile.favoriteGenres as List)
+              .map((g) => GenreEntity(
+                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
+                  name: g.name))
+              .toList();
+          _ownBooks = logUserProfile.ownBooks;
+          _favoriteBooks = logUserProfile.likedBooks;
+        });
+        
+        debugPrint("Usuario loggeado: "
+            // "ID: 24{logUserProfile.id}, "
+            // "Nombre: 24{logUserProfile.username}, "
+            // "Biografía: 24{logUserProfile.biography}, "
+            // "Imagen de perfil: 24{logUserProfile.profilePicture}, "
+            // "Banner: 24{logUserProfile.banner}, "
+            // "Géneros favoritos: 24{logUserProfile.favoriteGenres}, "
+            "Libros propios: 24{logUserProfile.ownBooks[0].coverImage} ");
+            // "Libros favoritos: 24{logUserProfile.likedBooks}");
+      } else {
+        final profile = await _getProfileUseCase.call(_profileUserId);
+        
+        // Actualiza las variables de estado
+        setState(() {
+          _username = profile.username;
+          _friendCode = profile.friendCode;
+          _bio = profile.biography ?? '';
+          _profileImageUrl = profile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
+          _bannerImageUrl = profile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
+          _friendsCount = profile.stats?.friendsCount ?? 0;
+          _followersCount = profile.stats?.followersCount ?? 0;
+          _favoriteGenres = (profile.favoriteGenres as List)
+              .map((g) => GenreEntity(
+                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
+                  name: g.name))
+              .toList();
+        });
+        
+        debugPrint("Usuario visitado: "
+            "ID: 24{profile.id}, "
+            "Nombre: 24{profile.username}, "
+            "Biografía: 24{profile.biography}, "
+            "Imagen de perfil: 24{profile.profilePicture}, "
+            "Banner: 24{profile.banner}, "
+            "Géneros favoritos: 24{profile.favoriteGenres.map((g) => g.name).join(', ')}");
+        
+        _isFollowed = await _checkIfFollowing(_profileUserId);
+      }
+
       setState(() {
-        _username = logUserProfile.username;
-        _friendCode = logUserProfile.friendCode;
-        _bio = logUserProfile.biography ?? '';
-        _profileImageUrl = logUserProfile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
-        _bannerImageUrl = logUserProfile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
-        _friendsCount = logUserProfile.stats?.friendsCount ?? 0;
-        _followersCount = logUserProfile.stats?.followersCount ?? 0;
-        _favoriteGenres = logUserProfile.favoriteGenres;
-        _ownBooks = logUserProfile.ownBooks;
-        _favoriteBooks = logUserProfile.likedBooks;
+        _isLoading = false;
+      });
+
+    } catch (e) {
+      debugPrint('[DEBUG_PROFILE] Error cargando perfil: $e');
+      setState(() {
+        _isLoading = false;
       });
       
-      debugPrint("Usuario loggeado: "
-          // "ID: ${logUserProfile.id}, "
-          // "Nombre: ${logUserProfile.username}, "
-          // "Biografía: ${logUserProfile.biography}, "
-          // "Imagen de perfil: ${logUserProfile.profilePicture}, "
-          // "Banner: ${logUserProfile.banner}, "
-          // "Géneros favoritos: ${logUserProfile.favoriteGenres}, "
-          "Libros propios: ${logUserProfile.ownBooks[0].coverImage} ");
-          // "Libros favoritos: ${logUserProfile.likedBooks}");
-    } else {
-      final profile = await _getProfileUseCase.call(_profileUserId);
-      
-      // Actualiza las variables de estado
-      setState(() {
-        _username = profile.username;
-        _friendCode = profile.friendCode;
-        _bio = profile.biography ?? '';
-        _profileImageUrl = profile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
-        _bannerImageUrl = profile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
-        _friendsCount = profile.stats?.friendsCount ?? 0;
-        _followersCount = profile.stats?.followersCount ?? 0;
-        _favoriteGenres = profile.favoriteGenres;
-      });
-      
-      debugPrint("Usuario visitado: "
-          "ID: ${profile.id}, "
-          "Nombre: ${profile.username}, "
-          "Biografía: ${profile.biography}, "
-          "Imagen de perfil: ${profile.profilePicture}, "
-          "Banner: ${profile.banner}, "
-          "Géneros favoritos: ${profile.favoriteGenres.map((g) => g.name).join(', ')}");
-      
-      _isFollowed = await _checkIfFollowing(_profileUserId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al cargar el perfil: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    setState(() {
-      _isLoading = false;
-    });
-
-  } catch (e) {
-    debugPrint('[DEBUG_PROFILE] Error cargando perfil: $e');
-    setState(() {
-      _isLoading = false;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error al cargar el perfil: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
   }
-}
   
   Future<bool> _checkIfFollowing(String userId) async {
     // Simular verificación en el backend
@@ -214,10 +228,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     debugPrint('[DEBUG_PROFILE] Dejando de seguir usuario $userId');
   }
 
-  void _showEditProfileModal() {
+  Future<void> _showEditProfileModal() async {
     final TextEditingController usernameController = TextEditingController(text: _username);
     final TextEditingController bioController = TextEditingController(text: _bio);
-    List<String> editableGenres = List.from(_favoriteGenres);
+
+    // Cargar todos los géneros disponibles si no están cargados
+    if (_allGenres.isEmpty) {
+      try {
+        _allGenres = await _getAllGenresUseCase.call();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar géneros: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
+    // Copia de los géneros favoritos actuales
+    List<GenreEntity> editableGenres = List.from(_favoriteGenres);
 
     showModalBottomSheet(
       context: context,
@@ -250,15 +281,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
-                  
                   // Campo nombre de usuario
                   _buildModalTextField(usernameController, 'Nombre de usuario'),
                   const SizedBox(height: 15),
-                  
                   // Campo biografía
                   _buildModalTextField(bioController, 'Biografía', maxLines: 3),
                   const SizedBox(height: 15),
-                  
                   // Sección de géneros favoritos
                   Text(
                     'Géneros Favoritos:',
@@ -269,20 +297,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  
                   // Lista de géneros disponibles
                   Container(
                     constraints: const BoxConstraints(maxHeight: 200),
                     child: ListView(
                       shrinkWrap: true,
-                      children: [
-                        'ROMANCE', 'SCI-FI', 'AUTO AYUDA', 'HORROR', 'POLITICA', 'FAN FIC',
-                        'AVENTURA', 'MISTERIO', 'DRAMA', 'COMEDIA', 'FANTASÍA', 'THRILLER'
-                      ].map((genre) {
-                        final isSelected = editableGenres.contains(genre);
+                      children: _allGenres.map((genre) {
+                        final isSelected = editableGenres.any((g) => g.id == genre.id);
                         return CheckboxListTile(
                           title: Text(
-                            '#$genre',
+                            '#${genre.name}',
                             style: GoogleFonts.monomaniacOne(
                               color: AppColors.textPrimary,
                               fontSize: 14,
@@ -292,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onChanged: (bool? value) {
                             setModalState(() {
                               if (isSelected) {
-                                editableGenres.remove(genre);
+                                editableGenres.removeWhere((g) => g.id == genre.id);
                               } else {
                                 editableGenres.add(genre);
                               }
@@ -305,9 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }).toList(),
                     ),
                   ),
-                  
                   const SizedBox(height: 25),
-                  
                   // Botón guardar cambios
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -319,18 +341,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     onPressed: () async {
                       try {
-                        // Simular actualización en backend
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        
-                        // Actualizar datos localmente
+                        // Llama al backend para actualizar el perfil
+                        final updatedProfile = await _profileApiService.updateProfile(
+                          _currentUserId,
+                          {
+                            'username': usernameController.text,
+                            'biography': bioController.text,
+                            'favoriteGenres': editableGenres.map((g) => g.id!).toList(),
+                          },
+                        );
+                        // Actualizar datos localmente con la respuesta
                         setState(() {
-                          _username = usernameController.text;
-                          _bio = bioController.text;
-                          _favoriteGenres = editableGenres.cast<Genre>();
+                          _username = updatedProfile.username;
+                          _bio = updatedProfile.biography ?? '';
+                          _favoriteGenres = (updatedProfile.favoriteGenres as List)
+                              .map((g) => GenreEntity(
+                                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
+                                  name: g.name))
+                              .toList();
                         });
-                        
                         Navigator.pop(modalContext);
-                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Perfil actualizado exitosamente'),
@@ -355,9 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  
                   const SizedBox(height: 10),
-                  
                   // Botón cancelar
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -574,11 +602,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 Widget _buildScrollableGenreGrid() {
   // Crear grupos de géneros para las filas (3 por fila)
-  final List<List<Genre>> genreRows = [];
+  final List<List<GenreEntity>> genreRows = [];
   
   // Dividir géneros en grupos de 3
   for (int i = 0; i < _favoriteGenres.length; i += 3) {
-    List<Genre> row = [];
+    List<GenreEntity> row = [];
     
     // Agregar hasta 3 géneros por fila
     for (int j = 0; j < 3 && (i + j) < _favoriteGenres.length; j++) {
@@ -625,7 +653,7 @@ Widget _buildScrollableGenreGrid() {
   );
 }
 
-Widget _buildScrollableGenreChip(Genre genre) {
+Widget _buildScrollableGenreChip(GenreEntity genre) {
   return GestureDetector(
     onTap: () {
       debugPrint('Tapped on genre: ${genre.name} (ID: ${genre.id})');

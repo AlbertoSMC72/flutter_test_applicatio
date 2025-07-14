@@ -14,24 +14,35 @@ class HomeApiServiceImpl implements HomeApiService {
   @override
   Future<List<HomeBookModel>> getAllBooks() async {
     try {
-      print('[DEBUG_HOME_API] Iniciando llamada a /books/');
+      print('[DEBUG_HOME_API] Iniciando llamada a /api/books/');
       
-      final response = await dio.get('/books/');
+      final response = await dio.get('/api/books/');
       
       print('[DEBUG_HOME_API] Respuesta recibida: ${response.statusCode}');
       print('[DEBUG_HOME_API] Datos recibidos: ${response.data}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> booksJson = response.data;
-        print('[DEBUG_HOME_API] Procesando ${booksJson.length} libros');
-        
-        final books = booksJson.map((book) {
-          print('[DEBUG_HOME_API] Procesando libro: $book');
-          return HomeBookModel.fromJson(book);
-        }).toList();
-        
-        print('[DEBUG_HOME_API] Libros procesados exitosamente: ${books.length}');
-        return books;
+        final responseData = response.data;
+        if (responseData is Map && responseData['success'] == true && responseData['data'] is List) {
+          final List<dynamic> booksJson = responseData['data'];
+          print('[DEBUG_HOME_API] Procesando ${booksJson.length} libros');
+          final books = booksJson.map((book) {
+            print('[DEBUG_HOME_API] Procesando libro: $book');
+            return HomeBookModel(
+              id: int.tryParse(book['id'].toString()) ?? 0,
+              title: book['title'] ?? '',
+              description: '', // No viene en la respuesta
+              createdAt: '', // No viene en la respuesta
+              authorId: 0, // No viene en la respuesta
+              genres: [book['genre'] ?? 'Sin género'],
+              coverImage: book['coverImage'] ?? '',
+            );
+          }).toList();
+          print('[DEBUG_HOME_API] Libros procesados exitosamente: ${books.length}');
+          return books;
+        } else {
+          throw Exception('Formato de respuesta inesperado');
+        }
       } else {
         throw Exception('Error del servidor: ${response.statusCode}');
       }

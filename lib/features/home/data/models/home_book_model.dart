@@ -1,6 +1,8 @@
 import '../../domain/entities/home_book_entity.dart';
 
 class HomeBookModel extends HomeBookEntity {
+  final String coverImage;
+
   const HomeBookModel({
     required super.id,
     required super.title,
@@ -8,6 +10,7 @@ class HomeBookModel extends HomeBookEntity {
     required super.createdAt,
     required super.authorId,
     required super.genres,
+    this.coverImage = '',
   });
 
   factory HomeBookModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +21,7 @@ class HomeBookModel extends HomeBookEntity {
       createdAt: json['created_at'] ?? '',
       authorId: json['author_id'] ?? 0,
       genres: List<String>.from(json['genres'] ?? []),
+      coverImage: json['coverImage'] ?? '',
     );
   }
 
@@ -29,6 +33,7 @@ class HomeBookModel extends HomeBookEntity {
       'created_at': createdAt,
       'author_id': authorId,
       'genres': genres,
+      'coverImage': coverImage,
     };
   }
 
@@ -40,9 +45,11 @@ class HomeBookModel extends HomeBookEntity {
       createdAt: entity.createdAt,
       authorId: entity.authorId,
       genres: entity.genres,
+      coverImage: entity.coverImage,
     );
   }
 
+  @override
   HomeBookEntity toEntity() {
     return HomeBookEntity(
       id: id,
@@ -51,6 +58,7 @@ class HomeBookModel extends HomeBookEntity {
       createdAt: createdAt,
       authorId: authorId,
       genres: genres,
+      coverImage: coverImage,
     );
   }
 }

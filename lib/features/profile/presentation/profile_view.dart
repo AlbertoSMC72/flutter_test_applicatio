@@ -12,6 +12,9 @@ import '../../components/navigationBar/navigationBar.dart';
 import '../../../features/writenBook/domain/usecases/books_usecases.dart';
 import '../../../features/writenBook/domain/entities/genre_entity.dart';
 import '../../../features/profile/data/datasourcers/profile_api_service.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../../../core/utils/image_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId; 
@@ -50,6 +53,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<OwnBook> _ownBooks = [];
   List<Book> _favoriteBooks = [];
   final ProfileApiService _profileApiService = di.sl<ProfileApiService>();
+  final UpdateProfilePictureUseCase _updateProfilePictureUseCase = di.sl<UpdateProfilePictureUseCase>();
+  final UpdateBannerUseCase _updateBannerUseCase = di.sl<UpdateBannerUseCase>();
 
   @override
   void initState() {
@@ -553,20 +558,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _updateBannerImage(String source) async {
     try {
-      // Simular actualización de imagen
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      setState(() { _isLoading = true; });
+      File? imageFile;
+      if (source == 'camera') {
+        imageFile = await ImageUtils.pickImage(source: ImageSource.camera);
+      } else {
+        imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
+      }
+      if (imageFile == null) {
+        setState(() { _isLoading = false; });
+        return;
+      }
+      String? base64Image = await ImageUtils.fileToBase64(imageFile);
+      if (base64Image == null) {
+        setState(() { _isLoading = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al procesar la imagen'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      final updatedProfile = await _updateBannerUseCase.call(_currentUserId, base64Image);
       setState(() {
-        _bannerImageUrl = 'https://placehold.co/411x163?text=Nueva+Portada';
+        _bannerImageUrl = updatedProfile.banner;
+        _isLoading = false;
       });
-      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Imagen de portada actualizada desde $source'),
-          backgroundColor: AppColors.success,
+        const SnackBar(
+          content: Text('Imagen de portada actualizada exitosamente'),
+          backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
+      setState(() { _isLoading = false; });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al actualizar imagen: $e'),
@@ -578,20 +604,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _updateProfileImage(String source) async {
     try {
-      // Simular actualización de imagen
-      await Future.delayed(const Duration(milliseconds: 500));
-      
+      setState(() { _isLoading = true; });
+      File? imageFile;
+      if (source == 'camera') {
+        imageFile = await ImageUtils.pickImage(source: ImageSource.camera);
+      } else {
+        imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
+      }
+      if (imageFile == null) {
+        setState(() { _isLoading = false; });
+        return;
+      }
+      String? base64Image = await ImageUtils.fileToBase64(imageFile);
+      if (base64Image == null) {
+        setState(() { _isLoading = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al procesar la imagen'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      final updatedProfile = await _updateProfilePictureUseCase.call(_currentUserId, base64Image);
       setState(() {
-        _profileImageUrl = 'https://placehold.co/150x150?text=Nuevo+Perfil';
+        _profileImageUrl = updatedProfile.profilePicture;
+        _isLoading = false;
       });
-      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Foto de perfil actualizada desde $source'),
-          backgroundColor: AppColors.success,
+        const SnackBar(
+          content: Text('Foto de perfil actualizada exitosamente'),
+          backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
+      setState(() { _isLoading = false; });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al actualizar imagen: $e'),

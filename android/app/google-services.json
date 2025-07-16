@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "407522746005",
+    "project_id": "watpato-e3fbf",
+    "storage_bucket": "watpato-e3fbf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407522746005:android:575960d512ba430c58459c",
+        "android_client_info": {
+          "package_name": "com.example.watpato"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLXmOHJ05kUi2QEEvo8bZtvuPq5dhqOEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -8,6 +8,8 @@ import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/services/firebase_service.dart' show firebaseMessagingBackgroundHandler;
 
 // Core imports
 import 'core/dependency_injection.dart' as di;
@@ -28,28 +30,32 @@ import 'package:flutter_application_1/features/home/presentation/cubit/home_cubi
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
+
+  // Registrar el background handler ANTES de inicializar Firebase
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   if (!kIsWeb && Platform.isAndroid) {
     await ScreenProtector.protectDataLeakageOn();
   }
 
-  //try {
-  //  await Firebase.initializeApp(
-  //    options: DefaultFirebaseOptions.currentPlatform,
-  //  );
-  //  debugPrint('✅ Firebase inicializado correctamente');
-//
-  //  // Initialize Firebase notifications service
-  //  final firebaseService = di.sl<FirebaseServiceImpl>();
-  //  await firebaseService.requestPermission();
-  //  await firebaseService.initializeNotifications();
-  //  await firebaseService.setupTokenRefreshListener();
-  //  
-  //  // Get and print the token (for debugging)
-  //  final token = await firebaseService.getFirebaseToken();
-  //  debugPrint('Firebase Messaging Token: $token');
-  //} catch (e) {
-  //  debugPrint('❌ Error inicializando Firebase: $e');
-  //}
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('✅ Firebase inicializado correctamente');
+
+    // Inicializar notificaciones
+    final firebaseService = di.sl<FirebaseServiceImpl>();
+    await firebaseService.requestPermission();
+    await firebaseService.initializeNotifications();
+    await firebaseService.setupTokenRefreshListener();
+
+    // Obtener y mostrar el token (debug)
+    final token = await firebaseService.getFirebaseToken();
+    debugPrint('Firebase Messaging Token: $token');
+  } catch (e) {
+    debugPrint('❌ Error inicializando Firebase: $e');
+  }
 
   runApp(const MyApp());
 }

@@ -53,7 +53,6 @@ class _CustomTopBarState extends State<CustomTopBar> {
     final double iconSize = isLandscape ? 22 : 30;
     final double userButtonSize = isLandscape ? 40 : 60;
     final double badgeSize = isLandscape ? 22 : 37;
-    final double fontSize = isLandscape ? 12 : 16;
     final double badgeFontSize = isLandscape ? 9 : 13;
     final double horizontalPadding = isLandscape ? 10 : 20;
     final double verticalPadding = isLandscape ? 5 : 10;

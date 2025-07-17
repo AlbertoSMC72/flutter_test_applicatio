@@ -101,7 +101,7 @@ class FavBooksApiServiceImpl implements FavBooksApiService {
       } else {
         throw Exception('Error de conexión: ${e.message}');
       }
-    } on FormatException catch (e) {
+    } on FormatException {
       throw Exception('Error: userId no es un número válido');
     } catch (e) {
       throw Exception('Error al obtener estado de like: $e');
@@ -135,7 +135,7 @@ class FavBooksApiServiceImpl implements FavBooksApiService {
       } else {
         throw Exception('Error de conexión: ${e.message}');
       }
-    } on FormatException catch (e) {
+    } on FormatException {
       throw Exception('Error: userId o bookId no son números válidos');
     } catch (e) {
       throw Exception('Error al cambiar estado de like: $e');

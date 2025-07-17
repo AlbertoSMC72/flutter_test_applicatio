@@ -49,7 +49,6 @@ class HomeBookModel extends HomeBookEntity {
     );
   }
 
-  @override
   HomeBookEntity toEntity() {
     return HomeBookEntity(
       id: id,

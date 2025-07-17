@@ -197,7 +197,6 @@ class _ChapterReaderScreenState extends State<ChapterReaderScreen> {
           if (state is ChapterError) {
             return _buildErrorView(state.message);
           }
-          dynamic chapter;
           if (state is ChapterLoaded) {
             final chapter = state.chapter;
             final isAuthor = (username != null && chapter.book?.author?.username == username);

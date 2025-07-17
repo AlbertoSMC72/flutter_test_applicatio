@@ -22,6 +22,8 @@ import 'cubit/book_detail_state.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../../components/searchUserBar/searchUserBar.dart';
 import 'package:go_router/go_router.dart';
+import 'cubit/book_likes_cubit.dart';
+import 'package:get_it/get_it.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
@@ -44,6 +46,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   
   // Caso de uso para obtener géneros (similar al de writenBook)
   late final writen_book.GetAllGenresUseCase _getAllGenresUseCase;
+  BookLikesCubit? _likesCubit;
+  String? _userId;
 
   @override
   void initState() {
@@ -100,6 +104,12 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       storageService: StorageServiceImpl(),
     );
     _cubit.loadBookDetail(widget.bookId);
+    StorageServiceImpl().getUserId().then((id) {
+      setState(() {
+        _userId = id;
+        _likesCubit = GetIt.I<BookLikesCubit>();
+      });
+    });
   }
 
   @override
@@ -801,8 +811,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _cubit),
+        if (_likesCubit != null) BlocProvider.value(value: _likesCubit!),
+      ],
       child: BlocConsumer<BookDetailCubit, BookDetailState>(
         listener: (context, state) {
           if (state is BookDetailError) {
@@ -862,591 +875,639 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           if (state is BookDetailLoaded) {
             final book = state.bookDetail;
             final isAuthor = state.isAuthor;
-            return Scaffold(
-              backgroundColor: AppColors.background,
-              body: Stack(
-                children: [
-                  // Círculos decorativos de fondo
-                  Positioned(
-                    left: -13,
-                    top: 676,
-                    child: Container(
-                      width: 257,
-                      height: 260,
-                      decoration: const BoxDecoration(
-                        color: AppColors.secondary,
-                        shape: BoxShape.circle,
+            // Cargar likes solo si no es autor y cubit está listo
+            if (!isAuthor && _userId != null && _likesCubit != null) {
+              final chapterIds = (book.chapters ?? []).map((c) => int.tryParse(c.id) ?? 0).toList();
+              _likesCubit!.loadLikes(_userId!, book.id, chapterIds);
+            }
+            return BlocBuilder<BookLikesCubit, BookLikesState>(
+              builder: (context, likesState) {
+                return Scaffold(
+                  backgroundColor: AppColors.background,
+                  body: Stack(
+                    children: [
+                      // Círculos decorativos de fondo
+                      Positioned(
+                        left: -13,
+                        top: 676,
+                        child: Container(
+                          width: 257,
+                          height: 260,
+                          decoration: const BoxDecoration(
+                            color: AppColors.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 231,
-                    top: -80,
-                    child: Container(
-                      width: 257,
-                      height: 260,
-                      decoration: const BoxDecoration(
-                        color: AppColors.secondary,
-                        shape: BoxShape.circle,
+                      Positioned(
+                        left: 231,
+                        top: -80,
+                        child: Container(
+                          width: 257,
+                          height: 260,
+                          decoration: const BoxDecoration(
+                            color: AppColors.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  // Contenido principal
-                  SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 120),
-                        // Título
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceTransparent,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
+                      // Contenido principal
+                      SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 120),
+                            // Título
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.symmetric(horizontal: 15),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceTransparent,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            book.title,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.monomaniacOne(
-                              color: AppColors.textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Imagen
-                        Container(
-                          width: 150,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15),
-                            child: SizedBox(
-                              width: 150,
-                              height: 200,
-                              child:
-                                  (book.coverImage != null &&
-                                          book.coverImage!.isNotEmpty)
-                                      ? Image.memory(
-                                        base64Decode(book.coverImage!),
-                                      )
-                                      : const Icon(Icons.book, size: 50),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Descripción
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          child: Text(
-                            book.description,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.monomaniacOne(
-                              color: AppColors.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Géneros
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceTransparent,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Géneros:',
+                              child: Text(
+                                book.title,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.monomaniacOne(
                                   color: AppColors.textPrimary,
-                                  fontSize: 14,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 8,
-                                runSpacing: 5,
-                                children:
-                                    (book.genres ?? [])
-                                        .map(
-                                          (genre) => Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                            ),
-                                            child: Text(
-                                              genre.name,
-                                              style: GoogleFonts.monomaniacOne(
-                                                color: AppColors.textDark,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        // Autor
-                        GestureDetector(
-                          onTap: () {
-                            if (book.authorId.isNotEmpty) {
-                              GoRouter.of(context).push(
-                                '/profile',
-                                extra: {'userId': book.authorId},
-                              );
-                            }
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 15),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 20,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceTransparent,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.shadowColor,
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Por: ${book.author?.username ?? 'Autor Desconocido'}',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.monomaniacOne(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.person,
-                                  color: AppColors.textPrimary,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        // Botones de autor
-                        if (isAuthor) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: () => _showEditBookModal(book),
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Editar'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: AppColors.textDark,
-                                ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed:
-                                    () => _cubit.publishBook(
-                                      !(book.published ?? false),
+                            const SizedBox(height: 20),
+                            // Botón seguir libro (like)
+                            if (!isAuthor && _userId != null)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      likesState.isBookLiked ? Icons.favorite : Icons.favorite_border,
+                                      color: likesState.isBookLiked ? Colors.red : Colors.grey,
+                                      size: 32,
                                     ),
-                                icon: Icon(
-                                  book.published == true
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                ),
-                                label: Text(
-                                  book.published == true
-                                      ? 'Despublicar'
-                                      : 'Publicar',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      book.published == true
-                                          ? Colors.orange
-                                          : Colors.green,
-                                  foregroundColor: Colors.white,
+                                    tooltip: likesState.isBookLiked ? 'Dejar de seguir' : 'Seguir',
+                                    onPressed: likesState.loading ? null : () {
+                                      _likesCubit!.toggleBook(_userId!, book.id);
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    likesState.isBookLiked ? 'Siguiendo' : 'Seguir',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    '${likesState.bookLikesCount} seguidores',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            // Imagen
+                            Container(
+                              width: 150,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15),
+                                child: SizedBox(
+                                  width: 150,
+                                  height: 200,
+                                  child:
+                                      (book.coverImage != null &&
+                                              book.coverImage!.isNotEmpty)
+                                          ? Image.memory(
+                                            base64Decode(book.coverImage!),
+                                          )
+                                          : const Icon(Icons.book, size: 50),
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Capítulos
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
+                            ),
+                            const SizedBox(height: 20),
+                            // Descripción
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 15),
                               child: Text(
-                                'Capítulos',
+                                book.description,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.monomaniacOne(
                                   color: AppColors.textPrimary,
-                                  fontSize: 16,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w400,
+                                  height: 1.4,
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 20),
+                            // Géneros
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 15),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceTransparent,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Géneros:',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 5,
+                                    children:
+                                        (book.genres ?? [])
+                                            .map(
+                                              (genre) => Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 10,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                ),
+                                                child: Text(
+                                                  genre.name,
+                                                  style: GoogleFonts.monomaniacOne(
+                                                    color: AppColors.textDark,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                            // Autor
+                            GestureDetector(
+                              onTap: () {
+                                if (book.authorId.isNotEmpty) {
+                                  GoRouter.of(context).push(
+                                    '/profile',
+                                    extra: {'userId': book.authorId},
+                                  );
+                                }
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Por: ${book.author?.username ?? 'Autor Desconocido'}',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.monomaniacOne(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.person,
+                                      color: AppColors.textPrimary,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            // Botones de autor
+                            if (isAuthor) ...[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () => _showEditBookModal(book),
+                                    icon: const Icon(Icons.edit),
+                                    label: const Text('Editar'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: AppColors.textDark,
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        () => _cubit.publishBook(
+                                          !(book.published ?? false),
+                                        ),
+                                    icon: Icon(
+                                      book.published == true
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                    label: Text(
+                                      book.published == true
+                                          ? 'Despublicar'
+                                          : 'Publicar',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          book.published == true
+                                              ? Colors.orange
+                                              : Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            // Capítulos
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                  ),
+                                  child: Text(
+                                    'Capítulos',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                                if (isAuthor)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed: _showAddChapterDialog,
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Agregar'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: AppColors.textDark,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+
+
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: book.chapters?.length ?? 0,
+                              itemBuilder: (context, index) {
+                                final chapter = book.chapters![index];
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                    vertical: 8,
+                                  ),
+                                  child: ListTile(
+                                    title: Text(chapter.title),
+                                    subtitle:
+                                        isAuthor && chapter.published != null
+                                            ? Text(
+                                              chapter.published!
+                                                  ? 'Publicado'
+                                                  : 'No publicado',
+                                            )
+                                            : null,
+                                    trailing: isAuthor && chapter.published != null
+  ? Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            chapter.published == true ? Icons.visibility : Icons.visibility_off,
+            color: chapter.published == true ? Colors.green : Colors.grey,
+          ),
+          tooltip: chapter.published == true ? 'Despublicar' : 'Publicar',
+          onPressed: () => _cubit.toggleChapterPublish(
+            chapter.id,
+            !(chapter.published ?? false),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          tooltip: 'Eliminar capítulo',
+          onPressed: () => _cubit.deleteChapter(chapter.id),
+        ),
+      ],
+    )
+  : !isAuthor && _userId != null
+    ? Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(
+              (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
+                ? Icons.favorite
+                : Icons.favorite_border,
+              color: (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
+                ? Colors.red
+                : Colors.grey,
+            ),
+            onPressed: likesState.loading ? null : () {
+              _likesCubit!.toggleChapter(_userId!, int.parse(chapter.id));
+            },
+          ),
+          Text(
+            '${likesState.chaptersLikeStatus[int.parse(chapter.id)]?['likesCount'] ?? 0}',
+            style: TextStyle(color: Colors.white),
+          ),
+        ],
+      )
+    : null,
+                                    onTap: () {
+                                      GoRouter.of(context).push(
+                                        '/chapterReader',
+                                        extra: {
+                                          'chapterId': chapter.id,
+                                          'bookTitle': book.title,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
                             ),
                             if (isAuthor)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 15,
+                                  vertical: 10,
                                 ),
                                 child: ElevatedButton.icon(
-                                  onPressed: _showAddChapterDialog,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Agregar'),
+                                  onPressed: () => _cubit.deleteBook(),
+                                  icon: const Icon(Icons.delete),
+                                  label: const Text('Eliminar libro'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: AppColors.textDark,
+                                    backgroundColor: Colors.red,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-
-
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: book.chapters?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            final chapter = book.chapters![index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 8,
+                            const SizedBox(height: 30),
+                            // Comentarios
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 15),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceTransparent,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                              child: ListTile(
-                                title: Text(chapter.title),
-                                subtitle:
-                                    isAuthor && chapter.published != null
-                                        ? Text(
-                                          chapter.published!
-                                              ? 'Publicado'
-                                              : 'No publicado',
-                                        )
-                                        : null,
-                                trailing:
-                                    isAuthor
-                                        ? Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: Icon(
-                                                chapter.published == true
-                                                    ? Icons.visibility
-                                                    : Icons.visibility_off,
-                                                color:
-                                                    chapter.published == true
-                                                        ? Colors.green
-                                                        : Colors.grey,
-                                              ),
-                                              tooltip:
-                                                  chapter.published == true
-                                                      ? 'Despublicar'
-                                                      : 'Publicar',
-                                              onPressed: () => _cubit
-                                                  .toggleChapterPublish(
-                                                    chapter.id,
-                                                    !(chapter
-                                                            .published ??
-                                                        false),
-                                                  ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.delete,
-                                                color: Colors.red,
-                                              ),
-                                              tooltip: 'Eliminar capítulo',
-                                              onPressed:
-                                                  () => _cubit.deleteChapter(
-                                                    chapter.id,
-                                                  ),
-                                            ),
-                                          ],
-                                        )
-                                        : null,
-                                onTap: () {
-                                  GoRouter.of(context).push(
-                                    '/chapterReader',
-                                    extra: {
-                                      'chapterId': chapter.id,
-                                      'bookTitle': book.title,
-                                    },
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                        if (isAuthor)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 15,
-                              vertical: 10,
-                            ),
-                            child: ElevatedButton.icon(
-                              onPressed: () => _cubit.deleteBook(),
-                              icon: const Icon(Icons.delete),
-                              label: const Text('Eliminar libro'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 30),
-                        // Comentarios
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceTransparent,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 15),
-                              const Icon(
-                                Icons.comment,
-                                color: AppColors.textPrimary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Comentarios (${book.comments?.length ?? 0})',
-                                style: GoogleFonts.monomaniacOne(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        // Campo para nuevo comentario
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceTransparent,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: commentController,
-                                  maxLines: 2,
-                                  style: GoogleFonts.monomaniacOne(
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 15),
+                                  const Icon(
+                                    Icons.comment,
                                     color: AppColors.textPrimary,
-                                    fontSize: 14,
+                                    size: 20,
                                   ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Escribe tu comentario...',
-                                    hintStyle: GoogleFonts.monomaniacOne(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 14,
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColors.withOpacity(
-                                      AppColors.surfaceTransparent,
-                                      0.5,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 15,
-                                      vertical: 12,
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Comentarios (${book.comments?.length ?? 0})',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              GestureDetector(
-                                onTap: () {
-                                  final text = commentController.text.trim();
-                                  if (text.isNotEmpty) {
-                                    _cubit.addComment(text);
-                                  }
-                                },
-                                child: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadowColor,
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
+                            ),
+                            const SizedBox(height: 15),
+                            // Campo para nuevo comentario
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 15),
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceTransparent,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: commentController,
+                                      maxLines: 2,
+                                      style: GoogleFonts.monomaniacOne(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
                                       ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.send,
-                                    color: AppColors.textDark,
-                                    size: 24,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Lista de comentarios
-                        ...(book.comments ?? []).map(
-                          (comment) => Container(
-                            margin: const EdgeInsets.only(
-                              bottom: 18,
-                              left: 15,
-                              right: 15,
-                            ),
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceTransparent,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.shadowColor,
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 18,
-                                      backgroundColor: AppColors.primary,
-                                      child: Text(
-                                        (comment.user?.username ?? 'U')[0]
-                                            .toUpperCase(),
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: AppColors.textDark,
+                                      decoration: InputDecoration(
+                                        hintText: 'Escribe tu comentario...',
+                                        hintStyle: GoogleFonts.monomaniacOne(
+                                          color: AppColors.textSecondary,
                                           fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        filled: true,
+                                        fillColor: AppColors.withOpacity(
+                                          AppColors.surfaceTransparent,
+                                          0.5,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 12,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        comment.user?.username ?? 'Usuario',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w400,
-                                        ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  GestureDetector(
+                                    onTap: () {
+                                      final text = commentController.text.trim();
+                                      if (text.isNotEmpty) {
+                                        _cubit.addComment(text);
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.send,
+                                        color: AppColors.textDark,
+                                        size: 24,
                                       ),
                                     ),
-                                    // Aquí podrías formatear la fecha si lo deseas
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            // Lista de comentarios
+                            ...(book.comments ?? []).map(
+                              (comment) => Container(
+                                margin: const EdgeInsets.only(
+                                  bottom: 18,
+                                  left: 15,
+                                  right: 15,
+                                ),
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceTransparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.shadowColor,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  comment.comment,
-                                  style: GoogleFonts.monomaniacOne(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.4,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: AppColors.primary,
+                                          child: Text(
+                                            (comment.user?.username ?? 'U')[0]
+                                                .toUpperCase(),
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: AppColors.textDark,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            comment.user?.username ?? 'Usuario',
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: AppColors.textPrimary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                        // Aquí podrías formatear la fecha si lo deseas
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      comment.comment,
+                                      style: GoogleFonts.monomaniacOne(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 100),
+                          ],
                         ),
-                        const SizedBox(height: 100),
-                      ],
-                    ),
+                      ),
+                      // TopBar
+                      const CustomTopBar(),
+                      // NavigationBar
+                      const Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: CustomNavigationBar(currentRoute: '/BookDetail'),
+                      ),
+                    ],
                   ),
-                  // TopBar
-                  const CustomTopBar(),
-                  // NavigationBar
-                  const Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: CustomNavigationBar(currentRoute: '/BookDetail'),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           }
           return const Scaffold(

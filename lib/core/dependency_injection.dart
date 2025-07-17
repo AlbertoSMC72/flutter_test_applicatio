@@ -50,8 +50,15 @@ import '../features/contentChapter/presentation/cubit/chapter_cubit.dart';
 import '../features/favBooks/data/datasources/fav_books_api_service.dart';
 import '../features/favBooks/data/repositories/fav_books_repository_impl.dart';
 import '../features/favBooks/domain/repositories/fav_books_repository.dart';
-import '../features/favBooks/domain/usecases/fav_books_usecases.dart';
+import '../features/favBooks/domain/usecases/fav_books_usecases.dart' as fav_books_usecases;
 import '../features/favBooks/presentation/cubit/fav_books_cubit.dart';
+
+// Book Likes feature imports
+import '../features/book/data/datasources/book_likes_api_service.dart';
+import '../features/book/data/repositories/book_likes_repository_impl.dart';
+import '../features/book/domain/repositories/book_likes_repository.dart';
+import '../features/book/domain/usecases/book_likes_usecases.dart' as book_likes_usecases;
+import '../features/book/presentation/cubit/book_likes_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -167,6 +174,9 @@ sl.registerLazySingleton<Dio>(() {
 
   // Fav Books feature
   _initFavBooksFeature();
+
+  // Book Likes feature
+  _initBookLikesFeature();
 }
 
 void _initRegisterFeature() {
@@ -313,15 +323,38 @@ void _initFavBooksFeature() {
   );
 
   // Use cases
-  sl.registerLazySingleton(() => GetUserFavBooksUseCase(sl()));
-  sl.registerLazySingleton(() => GetBookLikeStatusUseCase(sl()));
-  sl.registerLazySingleton(() => ToggleBookLikeUseCase(sl()));
-  sl.registerLazySingleton(() => GetBookDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => fav_books_usecases.GetUserFavBooksUseCase(sl()));
+  sl.registerLazySingleton(() => fav_books_usecases.GetBookLikeStatusUseCase(sl()));
+  sl.registerLazySingleton(() => fav_books_usecases.ToggleBookLikeUseCase(sl()));
+  sl.registerLazySingleton(() => fav_books_usecases.GetBookDetailsUseCase(sl()));
 
   // Cubits
   sl.registerFactory(() => FavBooksCubit(
     getUserFavBooksUseCase: sl(),
     getBookLikeStatusUseCase: sl(),
     toggleBookLikeUseCase: sl(),
+  ));
+}
+
+void _initBookLikesFeature() {
+  // Data source
+  sl.registerLazySingleton<BookLikesApiService>(
+    () => BookLikesApiService(sl<Dio>(instanceName: 'favoritesDio')),
+  );
+  // Repository
+  sl.registerLazySingleton<BookLikesRepository>(
+    () => BookLikesRepositoryImpl(sl()),
+  );
+  // Use cases
+  sl.registerLazySingleton(() => book_likes_usecases.GetBookLikeStatusUseCase(sl()));
+  sl.registerLazySingleton(() => book_likes_usecases.ToggleBookLikeUseCase(sl()));
+  sl.registerLazySingleton(() => book_likes_usecases.GetChaptersLikeStatusUseCase(sl()));
+  sl.registerLazySingleton(() => book_likes_usecases.ToggleChapterLikeUseCase(sl()));
+  // Cubit
+  sl.registerFactory(() => BookLikesCubit(
+    getBookLikeStatus: sl(),
+    toggleBookLike: sl(),
+    getChaptersLikeStatus: sl(),
+    toggleChapterLike: sl(),
   ));
 }

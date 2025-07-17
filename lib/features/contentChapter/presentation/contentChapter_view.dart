@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../../../core/services/storage_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 // Clase de datos para los comentarios del capítulo
 class ChapterCommentData {
   final String id;

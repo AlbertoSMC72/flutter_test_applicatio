@@ -46,6 +46,13 @@ import '../features/contentChapter/domain/repositories/chapter_repository.dart';
 import '../features/contentChapter/domain/usecases/chapter_usecases.dart';
 import '../features/contentChapter/presentation/cubit/chapter_cubit.dart';
 
+// Fav Books feature imports
+import '../features/favBooks/data/datasources/fav_books_api_service.dart';
+import '../features/favBooks/data/repositories/fav_books_repository_impl.dart';
+import '../features/favBooks/domain/repositories/fav_books_repository.dart';
+import '../features/favBooks/domain/usecases/fav_books_usecases.dart';
+import '../features/favBooks/presentation/cubit/fav_books_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
@@ -115,6 +122,28 @@ sl.registerLazySingleton<Dio>(() {
   return dio;
 }, instanceName: 'profileDio');
 
+sl.registerLazySingleton<Dio>(() {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: ApiUrls.apiUrlFavorites,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+  dio.interceptors.add(LogInterceptor(
+    requestBody: true,
+    responseBody: true,
+    error: true,
+    logPrint: (log) => print('[FAVORITES_DIO] $log'),
+  ));
+  return dio;
+}, instanceName: 'favoritesDio');
+
   // Core services
   sl.registerLazySingleton<StorageService>(() => StorageServiceImpl());
 
@@ -135,6 +164,9 @@ sl.registerLazySingleton<Dio>(() {
 
   // Content Chapter feature
   _initContentChapterFeature();
+
+  // Fav Books feature
+  _initFavBooksFeature();
 }
 
 void _initRegisterFeature() {
@@ -266,5 +298,30 @@ void _initContentChapterFeature() {
     getChapterDetailUseCase: sl(),
     addParagraphsUseCase: sl(),
     addCommentUseCase: sl(),
+  ));
+}
+
+void _initFavBooksFeature() {
+  // Data sources
+  sl.registerLazySingleton<FavBooksApiService>(
+    () => FavBooksApiServiceImpl(dio: sl(instanceName: 'favoritesDio')),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<FavBooksRepository>(
+    () => FavBooksRepositoryImpl(sl()),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetUserFavBooksUseCase(sl()));
+  sl.registerLazySingleton(() => GetBookLikeStatusUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleBookLikeUseCase(sl()));
+  sl.registerLazySingleton(() => GetBookDetailsUseCase(sl()));
+
+  // Cubits
+  sl.registerFactory(() => FavBooksCubit(
+    getUserFavBooksUseCase: sl(),
+    getBookLikeStatusUseCase: sl(),
+    toggleBookLikeUseCase: sl(),
   ));
 }

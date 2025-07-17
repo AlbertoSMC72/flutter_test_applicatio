@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_application_1/core/theme/app_colors.dart';
 
 class CustomNavigationBar extends StatefulWidget {
   final bool isVisible;
@@ -27,7 +28,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         return 1;
       case '/home':
         return 2;
-      case '/test':
+      case '/favorites':
         return 3;
       case '/login':
         return 4;
@@ -49,7 +50,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         route = '/home';
         break;
       case 3:
-        route = '/profile';
+        route = '/favorites';
         break;
       case 4:
         route = '/login';
@@ -106,14 +107,14 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
           width: _isExpanded ? expandedWidth : collapsedWidth,
           height: barThickness,
           decoration: BoxDecoration(
-            color: const Color(0xFFECEC3D),
+            color: AppColors.primary,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(15),
               bottomLeft: Radius.circular(15),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.25),
+                color: AppColors.shadowColor,
                 blurRadius: 8,
                 offset: const Offset(-4, 0),
                 spreadRadius: 0,
@@ -226,14 +227,14 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         width: screenWidth,
         height: barThickness,
         decoration: BoxDecoration(
-          color: const Color(0xFFECEC3D),
+          color: AppColors.primary,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(15),
             topRight: Radius.circular(15),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: AppColors.shadowColor,
               blurRadius: 8,
               offset: const Offset(0, -4),
               spreadRadius: 0,
@@ -324,7 +325,7 @@ class _NavBarItem extends StatelessWidget {
         height: itemExtent ?? 40,
         decoration: BoxDecoration(
           color: isSelected 
-              ? Colors.black.withOpacity(0.1)
+              ? AppColors.textDark.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -332,8 +333,8 @@ class _NavBarItem extends StatelessWidget {
           icon,
           size: iconSize ?? 24,
           color: isSelected 
-              ? const Color(0xFF1E1E1E)
-              : const Color(0xFF1E1E1E).withOpacity(0.7),
+              ? AppColors.textDark
+              : AppColors.textDark.withOpacity(0.7),
         ),
       ),
     );

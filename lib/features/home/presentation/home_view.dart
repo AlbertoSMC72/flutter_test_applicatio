@@ -8,6 +8,7 @@ import 'package:flutter_application_1/features/components/navigationBar/navigati
 import 'cubit/home_cubit.dart';
 import 'cubit/home_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_application_1/core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -88,11 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
         width: 184,
         height: 34,
         decoration: BoxDecoration(
-          color: const Color(0x35606060),
+          color: AppColors.surfaceTransparent,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: AppColors.shadowColor,
               blurRadius: 4,
               offset: const Offset(0, 4),
             ),
@@ -128,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 240,
               child: Center(
                 child: CircularProgressIndicator(
-                  color: const Color(0xFFECEC3D),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -140,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 240,
               child: Center(
                 child: CircularProgressIndicator(
-                  color: const Color(0xFFECEC3D),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -152,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 240,
               child: Center(
                 child: CircularProgressIndicator(
-                  color: const Color(0xFFECEC3D),
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -202,13 +203,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<HomeCubit>().loadBooks();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFECEC3D),
+                backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
               child: Text(
                 'Reintentar',
                 style: GoogleFonts.monomaniacOne(
-                  color: Colors.black,
+                  color: AppColors.textDark,
                   fontSize: 16,
                 ),
               ),
@@ -224,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Círculos decorativos morados de fondo
@@ -235,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 257,
               height: 260,
               decoration: const BoxDecoration(
-                color: Color(0xFF3D165C),
+                color: AppColors.secondary,
                 shape: BoxShape.circle,
               ),
             ),
@@ -247,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 257,
               height: 260,
               decoration: const BoxDecoration(
-                color: Color(0xFF3D165C),
+                color: AppColors.secondary,
                 shape: BoxShape.circle,
               ),
             ),
@@ -286,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onRefresh: () async {
                       context.read<HomeCubit>().refreshBooks();
                     },
-                    color: const Color(0xFFECEC3D),
+                    color: AppColors.primary,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Padding(
@@ -323,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Estado inicial
                 return Center(
                   child: CircularProgressIndicator(
-                    color: const Color(0xFFECEC3D),
+                    color: AppColors.primary,
                   ),
                 );
               },

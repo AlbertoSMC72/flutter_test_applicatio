@@ -26,6 +26,8 @@ import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
 import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
+import 'features/favBooks/presentation/favBooks_view.dart';
+import 'features/favBooks/presentation/cubit/fav_books_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,6 +104,15 @@ class MyApp extends StatelessWidget {
               (context, state) => BlocProvider(
                 create: (context) => di.sl<BooksCubit>(),
                 child: const UserStoriesScreen(),
+              ),
+        ),
+        GoRoute(
+          path: '/favorites',
+          name: 'Favorites',
+          builder:
+              (context, state) => BlocProvider(
+                create: (context) => di.sl<FavBooksCubit>(),
+                child: const FavBooksScreen(),
               ),
         ),
         GoRoute(

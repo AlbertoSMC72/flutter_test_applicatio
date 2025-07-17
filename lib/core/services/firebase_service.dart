@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 abstract class FirebaseService {
@@ -34,9 +35,9 @@ class FirebaseServiceImpl implements FirebaseService {
     try {
       _firebaseMessaging = FirebaseMessaging.instance;
       _isInitialized = true;
-      print('[DEBUG_FIREBASE] Firebase Messaging inicializado correctamente');
+      debugPrint('[DEBUG_FIREBASE] Firebase Messaging inicializado correctamente');
     } catch (e) {
-      print('[DEBUG_FIREBASE] Error inicializando Firebase: $e');
+      debugPrint('[DEBUG_FIREBASE] Error inicializando Firebase: $e');
       _isInitialized = false;
     }
   }
@@ -44,16 +45,16 @@ class FirebaseServiceImpl implements FirebaseService {
   @override
   Future<String?> getFirebaseToken() async {
     if (!_isInitialized || _firebaseMessaging == null) {
-      print('[DEBUG_FIREBASE] Firebase no disponible, continuando sin token');
+      debugPrint('[DEBUG_FIREBASE] Firebase no disponible, continuando sin token');
       return null;
     }
 
     try {
       String? token = await _firebaseMessaging!.getToken();
-      print('[DEBUG_FIREBASE] Token obtenido: ${token?.substring(0, 20)}...');
+      debugPrint('[DEBUG_FIREBASE] Token obtenido: ${token?.substring(0, 20)}...');
       return token;
     } catch (e) {
-      print('[DEBUG_FIREBASE] Error obteniendo token: $e');
+      debugPrint('[DEBUG_FIREBASE] Error obteniendo token: $e');
       return null;
     }
   }
@@ -61,7 +62,7 @@ class FirebaseServiceImpl implements FirebaseService {
   @override
   Future<void> requestPermission() async {
     if (!_isInitialized || _firebaseMessaging == null) {
-      print('[DEBUG_FIREBASE] Saltando permisos - Firebase no disponible');
+      debugPrint('[DEBUG_FIREBASE] Saltando permisos - Firebase no disponible');
       return;
     }
 
@@ -76,26 +77,26 @@ class FirebaseServiceImpl implements FirebaseService {
         sound: true,
       );
 
-      print('[DEBUG_FIREBASE] Permisos: ${settings.authorizationStatus}');
+      debugPrint('[DEBUG_FIREBASE] Permisos: ${settings.authorizationStatus}');
     } catch (e) {
-      print('[DEBUG_FIREBASE] Error solicitando permisos: $e');
+      debugPrint('[DEBUG_FIREBASE] Error solicitando permisos: $e');
     }
   }
 
   @override
   Future<void> setupTokenRefreshListener() async {
     if (!_isInitialized || _firebaseMessaging == null) {
-      print('[DEBUG_FIREBASE] Saltando listener - Firebase no disponible');
+      debugPrint('[DEBUG_FIREBASE] Saltando listener - Firebase no disponible');
       return;
     }
 
     try {
       _firebaseMessaging!.onTokenRefresh.listen((newToken) {
-        print('[DEBUG_FIREBASE] Token renovado: ${newToken.substring(0, 20)}...');
+        debugPrint('[DEBUG_FIREBASE] Token renovado: ${newToken.substring(0, 20)}...');
         // Aquí podrías enviar el nuevo token al servidor
       });
     } catch (e) {
-      print('[DEBUG_FIREBASE] Error configurando listener: $e');
+      debugPrint('[DEBUG_FIREBASE] Error configurando listener: $e');
     }
   }
 
@@ -121,17 +122,17 @@ class FirebaseServiceImpl implements FirebaseService {
 
     // Set up foreground notification handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
 
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        debugPrint('Message also contained a notification: ${message.notification}');
         _showNotification(message);
       }
     });
 
     // Handle background messages
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   }
 
   Future<void> _showNotification(RemoteMessage message) async {
@@ -161,7 +162,7 @@ class FirebaseServiceImpl implements FirebaseService {
 
 // Top-level background message handler
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
-  // You can handle background notifications here
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint("Handling a background message:  {message.messageId}");
+  // Puedes manejar notificaciones en background aquí
 }

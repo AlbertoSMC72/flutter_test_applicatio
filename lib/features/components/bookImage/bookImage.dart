@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -24,7 +26,7 @@ class BookImage extends StatelessWidget {
         height: 200,
         child: Stack(
           children: [
-            // Imagen principal del libro
+            // Imagen principal del libro o espacio vacío
             Positioned(
               left: 0,
               top: 0,
@@ -32,10 +34,15 @@ class BookImage extends StatelessWidget {
                 width: 150,
                 height: 200,
                 decoration: ShapeDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(imageUrl),
-                    fit: BoxFit.cover,
-                  ),
+                  color: (imageUrl.isEmpty)
+                      ? const Color(0xFFE0E0E0)
+                      : null,
+                  image: (imageUrl.isNotEmpty)
+                      ? DecorationImage(
+                          image: Image.memory(base64Decode(imageUrl)).image,
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
@@ -48,6 +55,15 @@ class BookImage extends StatelessWidget {
                     )
                   ],
                 ),
+                child: (imageUrl.isEmpty)
+                    ? Center(
+                        child: Icon(
+                          Icons.menu_book,
+                          color: Colors.grey[400],
+                          size: 60,
+                        ),
+                      )
+                    : null,
               ),
             ),
             Positioned(

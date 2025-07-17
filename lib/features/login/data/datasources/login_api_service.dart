@@ -13,31 +13,7 @@ abstract class LoginApiService {
 class LoginApiServiceImpl implements LoginApiService {
   final Dio dio;
 
-  LoginApiServiceImpl({Dio? dio}) : dio = dio ?? Dio() {
-    _setupDio();
-  }
-
-  void _setupDio() {
-    dio.options = BaseOptions(
-      baseUrl: 'https://userauthenticationservicewatpato-production.up.railway.app/',
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        logPrint: (log) => print('[LOGIN_DIO] $log'),
-      ),
-    );
-  }
+  LoginApiServiceImpl({required this.dio});
 
   @override
   Future<LoginModel> loginUser({

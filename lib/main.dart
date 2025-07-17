@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/services/firebase_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +8,8 @@ import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/services/firebase_service.dart' show firebaseMessagingBackgroundHandler;
 
 // Core imports
 import 'core/dependency_injection.dart' as di;
@@ -21,30 +26,38 @@ import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
 import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
+import 'features/favBooks/presentation/favBooks_view.dart';
+import 'features/favBooks/presentation/cubit/fav_books_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
-  await ScreenProtector.protectDataLeakageOn();
 
-  //try {
-  //  await Firebase.initializeApp(
-  //    options: DefaultFirebaseOptions.currentPlatform,
-  //  );
-  //  debugPrint('✅ Firebase inicializado correctamente');
-//
-  //  // Initialize Firebase notifications service
-  //  final firebaseService = di.sl<FirebaseServiceImpl>();
-  //  await firebaseService.requestPermission();
-  //  await firebaseService.initializeNotifications();
-  //  await firebaseService.setupTokenRefreshListener();
-  //  
-  //  // Get and print the token (for debugging)
-  //  final token = await firebaseService.getFirebaseToken();
-  //  debugPrint('Firebase Messaging Token: $token');
-  //} catch (e) {
-  //  debugPrint('❌ Error inicializando Firebase: $e');
-  //}
+  // Registrar el background handler ANTES de inicializar Firebase
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  if (!kIsWeb && Platform.isAndroid) {
+    await ScreenProtector.protectDataLeakageOn();
+  }
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('✅ Firebase inicializado correctamente');
+
+    // Inicializar notificaciones
+    final firebaseService = di.sl<FirebaseServiceImpl>();
+    await firebaseService.requestPermission();
+    await firebaseService.initializeNotifications();
+    await firebaseService.setupTokenRefreshListener();
+
+    // Obtener y mostrar el token (debug)
+    final token = await firebaseService.getFirebaseToken();
+    debugPrint('Firebase Messaging Token: $token');
+  } catch (e) {
+    debugPrint('❌ Error inicializando Firebase: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -94,24 +107,21 @@ class MyApp extends StatelessWidget {
               ),
         ),
         GoRoute(
+          path: '/favorites',
+          name: 'Favorites',
+          builder:
+              (context, state) => BlocProvider(
+                create: (context) => di.sl<FavBooksCubit>(),
+                child: const FavBooksScreen(),
+              ),
+        ),
+        GoRoute(
           path: '/bookDetail',
           name: 'BookDetail',
           builder: (context, state) {
             final args = state.extra as Map<String, dynamic>? ?? {};
             return BookDetailScreen(
               bookId: args['bookId']?.toString() ?? '0',
-              bookTitle: args['bookTitle']?.toString() ?? 'Título Desconocido',
-              bookDescription:
-                  args['bookDescription']?.toString() ??
-                  'Sin descripción disponible',
-              bookImageUrl:
-                  args['bookImageUrl']?.toString() ??
-                  'https://placehold.co/150x200',
-              authorName: args['authorName']?.toString() ?? 'Autor Desconocido',
-              genres:
-                  args['genres'] is List
-                      ? List<String>.from(args['genres'])
-                      : <String>[],
             );
           },
         ),

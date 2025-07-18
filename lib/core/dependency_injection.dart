@@ -4,6 +4,7 @@ import 'package:flutter_application_1/features/profile/data/datasourcers/profile
 import 'package:flutter_application_1/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
 import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
+import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 
@@ -285,6 +286,16 @@ void _initProfileFeature() {
   sl.registerLazySingleton(() => UpdateProfileUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateProfilePictureUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateBannerUseCase(repository: sl()));
+
+  // Cubit
+  sl.registerFactory(() => ProfileCubit(
+    storageService: sl(),
+    getProfileUseCase: sl(),
+    getAllGenresUseCase: sl(),
+    profileApiService: sl(),
+    updateProfilePictureUseCase: sl(),
+    updateBannerUseCase: sl()
+  ));
 }
 
 void _initContentChapterFeature() {

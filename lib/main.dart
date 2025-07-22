@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/services/firebase_service.dart';
+import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -139,10 +140,16 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/profile',
           name: 'Profile',
-          builder: (context, state) {
-            final args = state.extra as Map<String, dynamic>? ?? {};
-            return ProfileScreen(userId: args['userId']?.toString());
-          },
+          builder:
+              (context, state) => BlocProvider(
+                create: (context) => di.sl<ProfileCubit>(),
+                child: Builder(
+                  builder: (context) {
+                    final args = state.extra as Map<String, dynamic>? ?? {};
+                    return ProfileScreen(userId: args['userId']?.toString() ?? '');
+                  },
+                ),
+              ),
         ),
       ],
       errorBuilder:

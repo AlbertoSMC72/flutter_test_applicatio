@@ -188,9 +188,11 @@ class _FavBooksScreenState extends State<FavBooksScreen> {
                                   padding: const EdgeInsets.only(bottom: 30),
                                   child: BookInfoWriter(
                                     title: favBook.book.title,
-                                    synopsis: 'Por: ${favBook.book.author.username}',
+                                    synopsis: favBook.book.description ?? 'Por: ${favBook.book.author.username}',
                                     imageUrl: favBook.book.coverImage ?? '',
-                                    tags: 'Favorito',
+                                    tags: favBook.book.genres != null && favBook.book.genres!.isNotEmpty
+                                        ? favBook.book.genres!.join(', ')
+                                        : 'Favorito',
                                     isLiked: favBook.book.isLiked ?? true, // Usar el estado real
                                     likesCount: favBook.book.likesCount ?? 0, // Usar el contador real
                                     onTap: () {

@@ -34,6 +34,8 @@ class BookEntity {
   final String id;
   final String title;
   final AuthorEntity author;
+  final String? description;
+  final List<String>? genres;
   final String? coverImage;
   final int? likesCount;
   final bool? isLiked;
@@ -42,6 +44,8 @@ class BookEntity {
     required this.id,
     required this.title,
     required this.author,
+    this.description,
+    this.genres,
     this.coverImage,
     this.likesCount,
     this.isLiked,
@@ -51,6 +55,8 @@ class BookEntity {
     String? id,
     String? title,
     AuthorEntity? author,
+    String? description,
+    List<String>? genres,
     String? coverImage,
     int? likesCount,
     bool? isLiked,
@@ -59,6 +65,8 @@ class BookEntity {
       id: id ?? this.id,
       title: title ?? this.title,
       author: author ?? this.author,
+      description: description ?? this.description,
+      genres: genres ?? this.genres,
       coverImage: coverImage ?? this.coverImage,
       likesCount: likesCount ?? this.likesCount,
       isLiked: isLiked ?? this.isLiked,

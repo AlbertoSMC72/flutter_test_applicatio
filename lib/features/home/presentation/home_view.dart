@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: BookImage(
               title: book.title,
               category: book.genres.isNotEmpty ? book.genres.first : 'Sin género',
-              imageUrl: book.coverImage ?? '',
+              imageUrl: book.coverImage,
               onTap: () => _handleBookTap(book),
             ),
           );

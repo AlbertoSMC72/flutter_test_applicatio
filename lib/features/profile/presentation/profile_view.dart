@@ -10,7 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../components/navigationBar/navigationBar.dart';
-import '../../../features/writenBook/domain/entities/genre_entity.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;

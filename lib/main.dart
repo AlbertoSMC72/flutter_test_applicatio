@@ -29,6 +29,11 @@ import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
 import 'features/favBooks/presentation/favBooks_view.dart';
 import 'features/favBooks/presentation/cubit/fav_books_cubit.dart';
+import 'features/downloadedBooks/presentation/downloaded_books_view.dart';
+import 'features/downloadedBooks/presentation/cubit/downloaded_books_cubit.dart';
+import 'features/downloadedBooks/domain/usecases/get_downloaded_books_usecase.dart';
+import 'features/downloadedBooks/data/repositories/downloaded_books_repository_impl.dart';
+import 'core/services/download_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -115,6 +120,18 @@ class MyApp extends StatelessWidget {
                 create: (context) => di.sl<FavBooksCubit>(),
                 child: const FavBooksScreen(),
               ),
+        ),
+        GoRoute(
+          path: '/downloaded',
+          name: 'DownloadedBooks',
+          builder: (context, state) => BlocProvider(
+            create: (context) => DownloadedBooksCubit(
+              GetDownloadedBooksUseCase(
+                DownloadedBooksRepositoryImpl(DownloadService()),
+              ),
+            ),
+            child: const DownloadedBooksView(),
+          ),
         ),
         GoRoute(
           path: '/bookDetail',

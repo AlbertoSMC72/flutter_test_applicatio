@@ -11,6 +11,7 @@ import 'package:dio/dio.dart';
 // Core services
 import '../core/services/storage_service.dart';
 import '../core/services/firebase_service.dart';
+import '../core/services/download_service.dart';
 
 // Register feature imports
 import '../features/register/data/datasources/register_api_service.dart';
@@ -67,6 +68,12 @@ import '../features/book/data/repositories/book_detail_repository_impl.dart';
 import '../features/book/domain/repositories/book_detail_repository.dart';
 import '../features/book/domain/usecases/book_detail_usecases.dart' as book_detail_usecases;
 import '../features/book/presentation/cubit/book_detail_cubit.dart';
+
+// Downloaded Books feature imports
+import '../features/downloadedBooks/data/repositories/downloaded_books_repository_impl.dart';
+import '../features/downloadedBooks/domain/repositories/downloaded_books_repository.dart';
+import '../features/downloadedBooks/domain/usecases/get_downloaded_books_usecase.dart';
+import '../features/downloadedBooks/presentation/cubit/downloaded_books_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -161,6 +168,7 @@ sl.registerLazySingleton<Dio>(() {
 
   // Core services
   sl.registerLazySingleton<StorageService>(() => StorageServiceImpl());
+  sl.registerLazySingleton<DownloadService>(() => DownloadService());
 
   // Register feature
   _initRegisterFeature();
@@ -187,6 +195,9 @@ sl.registerLazySingleton<Dio>(() {
   _initBookLikesFeature();
   // Book Detail feature
   _initBookDetailFeature();
+
+  // Downloaded Books feature
+  _initDownloadedBooksFeature();
 }
 
 void _initRegisterFeature() {
@@ -409,4 +420,15 @@ void _initBookDetailFeature() {
     addCommentUseCase: sl(),
     storageService: sl(),
   ));
+}
+
+void _initDownloadedBooksFeature() {
+  // Repositorio
+  sl.registerLazySingleton<DownloadedBooksRepository>(
+    () => DownloadedBooksRepositoryImpl(DownloadService()),
+  );
+  // Usecase
+  sl.registerLazySingleton(() => GetDownloadedBooksUseCase(sl()));
+  // Cubit
+  sl.registerFactory(() => DownloadedBooksCubit(sl()));
 }

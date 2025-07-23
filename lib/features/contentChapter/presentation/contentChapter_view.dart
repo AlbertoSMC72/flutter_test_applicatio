@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../../../core/services/storage_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Clase de datos para los comentarios del capítulo
+
 class ChapterCommentData {
   final String id;
   final String username;
@@ -27,10 +27,10 @@ class ChapterReaderScreen extends StatefulWidget {
   final String bookTitle;
 
   const ChapterReaderScreen({
-    Key? key,
+    super.key,
     this.chapterId = '1',
     this.bookTitle = 'Mi Libro Favorito',
-  }) : super(key: key);
+  });
 
   @override
   State<ChapterReaderScreen> createState() => _ChapterReaderScreenState();

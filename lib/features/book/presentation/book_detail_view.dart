@@ -9,13 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/image_utils.dart';
-import '../../book/data/datasources/book_detail_api_service.dart';
-import '../../book/data/repositories/book_detail_repository_impl.dart';
-import '../../book/domain/usecases/book_detail_usecases.dart';
 import '../../book/domain/entities/book_detail_entity.dart';
-import '../../writenBook/domain/usecases/books_usecases.dart' as writen_book;
-import '../../writenBook/data/repositories/books_repository_impl.dart' as writen_book_repo;
-import '../../writenBook/data/datasources/books_api_service.dart' as writen_book_api;
+import '../../writenBook/domain/usecases/books_usecases.dart' show GetAllGenresUseCase;
 import '../../writenBook/domain/entities/genre_entity.dart' as writen_book_entity;
 import 'cubit/book_detail_cubit.dart';
 import 'cubit/book_detail_state.dart';
@@ -45,7 +40,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   late final BookDetailCubit _cubit;
   
   // Caso de uso para obtener géneros (similar al de writenBook)
-  late final writen_book.GetAllGenresUseCase _getAllGenresUseCase;
+  late final GetAllGenresUseCase _getAllGenresUseCase;
   BookLikesCubit? _likesCubit;
   String? _userId;
 
@@ -53,56 +48,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   void initState() {
     super.initState();
     
-    // Inicializar caso de uso para géneros
-    _getAllGenresUseCase = writen_book.GetAllGenresUseCase(
-      writen_book_repo.BooksRepositoryImpl(
-        apiService: writen_book_api.BooksApiServiceImpl(),
-      ),
-    );
-    
-    _cubit = BookDetailCubit(
-      getBookDetailUseCase: GetBookDetailUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      updateBookUseCase: UpdateBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      publishBookUseCase: PublishBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      addChapterUseCase: AddChapterUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      toggleChapterPublishUseCase: ToggleChapterPublishUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      deleteChapterUseCase: DeleteChapterUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      deleteBookUseCase: DeleteBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      addCommentUseCase: AddCommentUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      storageService: StorageServiceImpl(),
-    );
+    // Obtener instancias desde GetIt
+    _getAllGenresUseCase = GetIt.I<GetAllGenresUseCase>();
+    _cubit = GetIt.I<BookDetailCubit>();
     _cubit.loadBookDetail(widget.bookId);
     StorageServiceImpl().getUserId().then((id) {
       setState(() {

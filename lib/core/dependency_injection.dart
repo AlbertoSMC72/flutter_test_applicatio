@@ -30,7 +30,7 @@ import '../features/login/presentation/cubit/login_cubit.dart';
 import '../features/writenBook/data/datasources/books_api_service.dart';
 import '../features/writenBook/data/repositories/books_repository_impl.dart';
 import '../features/writenBook/domain/repositories/books_repository.dart';
-import '../features/writenBook/domain/usecases/books_usecases.dart';
+import '../features/writenBook/domain/usecases/books_usecases.dart' as writen_book_usecases;
 import '../features/writenBook/presentation/cubit/books_cubit.dart';
 
 // Home feature imports
@@ -60,6 +60,13 @@ import '../features/book/data/repositories/book_likes_repository_impl.dart';
 import '../features/book/domain/repositories/book_likes_repository.dart';
 import '../features/book/domain/usecases/book_likes_usecases.dart' as book_likes_usecases;
 import '../features/book/presentation/cubit/book_likes_cubit.dart';
+
+// Book Detail feature imports
+import '../features/book/data/datasources/book_detail_api_service.dart';
+import '../features/book/data/repositories/book_detail_repository_impl.dart';
+import '../features/book/domain/repositories/book_detail_repository.dart';
+import '../features/book/domain/usecases/book_detail_usecases.dart' as book_detail_usecases;
+import '../features/book/presentation/cubit/book_detail_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -178,6 +185,8 @@ sl.registerLazySingleton<Dio>(() {
 
   // Book Likes feature
   _initBookLikesFeature();
+  // Book Detail feature
+  _initBookDetailFeature();
 }
 
 void _initRegisterFeature() {
@@ -228,14 +237,14 @@ void _initBooksFeature() {
   );
 
   // Use cases
-  sl.registerLazySingleton(() => GetUserBooksUseCase(sl()));
-  sl.registerLazySingleton(() => GetUserWritingBooksUseCase(sl()));
-  sl.registerLazySingleton(() => CreateBookUseCase(sl()));
-  sl.registerLazySingleton(() => UpdateBookUseCase(sl()));
-  sl.registerLazySingleton(() => PublishBookUseCase(sl()));
-  sl.registerLazySingleton(() => DeleteBookUseCase(sl()));
-  sl.registerLazySingleton(() => GetAllGenresUseCase(sl()));
-  sl.registerLazySingleton(() => CreateGenreUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.GetUserBooksUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.GetUserWritingBooksUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.CreateBookUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.UpdateBookUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.PublishBookUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.DeleteBookUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.GetAllGenresUseCase(sl()));
+  sl.registerLazySingleton(() => writen_book_usecases.CreateGenreUseCase(sl()));
 
   // Cubits
   sl.registerFactory(() => BooksCubit(
@@ -367,5 +376,37 @@ void _initBookLikesFeature() {
     toggleBookLike: sl(),
     getChaptersLikeStatus: sl(),
     toggleChapterLike: sl(),
+  ));
+}
+
+void _initBookDetailFeature() {
+  // Data source
+  sl.registerLazySingleton<BookDetailApiService>(
+    () => BookDetailApiServiceImpl(),
+  );
+  // Repository
+  sl.registerLazySingleton<BookDetailRepository>(
+    () => BookDetailRepositoryImpl(apiService: sl()),
+  );
+  // Use cases
+  sl.registerLazySingleton(() => book_detail_usecases.GetBookDetailUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.UpdateBookUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.PublishBookUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.AddChapterUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.ToggleChapterPublishUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.DeleteChapterUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.DeleteBookUseCase(repository: sl()));
+  sl.registerLazySingleton(() => book_detail_usecases.AddCommentUseCase(repository: sl()));
+  // Cubit
+  sl.registerFactory(() => BookDetailCubit(
+    getBookDetailUseCase: sl(),
+    updateBookUseCase: sl(),
+    publishBookUseCase: sl(),
+    addChapterUseCase: sl(),
+    toggleChapterPublishUseCase: sl(),
+    deleteChapterUseCase: sl(),
+    deleteBookUseCase: sl(),
+    addCommentUseCase: sl(),
+    storageService: sl(),
   ));
 }

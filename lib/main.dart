@@ -34,6 +34,10 @@ import 'features/downloadedBooks/presentation/cubit/downloaded_books_cubit.dart'
 import 'features/downloadedBooks/domain/usecases/get_downloaded_books_usecase.dart';
 import 'features/downloadedBooks/data/repositories/downloaded_books_repository_impl.dart';
 import 'core/services/download_service.dart';
+import 'features/downloadedBooks/presentation/downloaded_chapters_view.dart';
+import 'features/downloadedBooks/presentation/downloaded_chapter_reader_view.dart';
+import 'features/downloadedBooks/presentation/cubit/downloaded_chapters_cubit.dart';
+import 'features/downloadedBooks/domain/usecases/get_downloaded_chapters_usecase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,6 +136,31 @@ class MyApp extends StatelessWidget {
             ),
             child: const DownloadedBooksView(),
           ),
+        ),
+        GoRoute(
+          path: '/downloadedChapters',
+          name: 'DownloadedChapters',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (context) => di.sl<DownloadedChaptersCubit>()..loadDownloadedChapters(args['bookId'] ?? ''),
+              child: DownloadedChaptersView(
+                bookId: args['bookId'] ?? '',
+                bookTitle: args['bookTitle'] ?? '',
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/downloadedChapterReader',
+          name: 'DownloadedChapterReader',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return DownloadedChapterReaderView(
+              chapterId: args['chapterId'] ?? '',
+              bookTitle: args['bookTitle'] ?? '',
+            );
+          },
         ),
         GoRoute(
           path: '/bookDetail',

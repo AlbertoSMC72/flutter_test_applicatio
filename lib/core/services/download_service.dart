@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqlite_api.dart';
 import '../../features/book/domain/entities/book_detail_entity.dart';
 import '../../features/contentChapter/domain/entities/chapter_entity.dart' as detail_entities;
+import 'package:flutter_application_1/features/contentChapter/domain/usecases/chapter_usecases.dart';
 
 
 abstract class ChapterDetailProvider {
@@ -17,9 +18,14 @@ class DownloadService {
 
   Database? _db;
   ChapterDetailProvider? chapterDetailProvider;
+  GetChapterDetailUseCase? getChapterDetailUseCase;
 
   void setChapterDetailProvider(ChapterDetailProvider provider) {
     chapterDetailProvider = provider;
+  }
+
+  void setChapterDetailUseCase(GetChapterDetailUseCase useCase) {
+    getChapterDetailUseCase = useCase;
   }
 
   Future<Database> get database async {
@@ -100,8 +106,8 @@ class DownloadService {
 
   // Para guardar un capítulo individual (por id)
   Future<void> saveChapterById(String bookId, String chapterId) async {
-    if (chapterDetailProvider == null) return;
-    final detail = await chapterDetailProvider!.getChapterDetail(chapterId);
+    if (getChapterDetailUseCase == null) return;
+    final detail = await getChapterDetailUseCase!(chapterId);
     final content = detail.paragraphs.map((p) => p.content).join('\n\n');
     await saveChapter(
       bookId,

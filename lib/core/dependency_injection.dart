@@ -74,6 +74,10 @@ import '../features/downloadedBooks/data/repositories/downloaded_books_repositor
 import '../features/downloadedBooks/domain/repositories/downloaded_books_repository.dart';
 import '../features/downloadedBooks/domain/usecases/get_downloaded_books_usecase.dart';
 import '../features/downloadedBooks/presentation/cubit/downloaded_books_cubit.dart';
+import '../features/downloadedBooks/data/repositories/downloaded_chapters_repository_impl.dart';
+import '../features/downloadedBooks/domain/repositories/downloaded_chapters_repository.dart';
+import '../features/downloadedBooks/domain/usecases/get_downloaded_chapters_usecase.dart';
+import '../features/downloadedBooks/presentation/cubit/downloaded_chapters_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -198,6 +202,9 @@ sl.registerLazySingleton<Dio>(() {
 
   // Downloaded Books feature
   _initDownloadedBooksFeature();
+
+  // Inyectar el usecase de capítulo en DownloadService
+  sl<DownloadService>().setChapterDetailUseCase(sl<GetChapterDetailUseCase>());
 }
 
 void _initRegisterFeature() {
@@ -423,12 +430,21 @@ void _initBookDetailFeature() {
 }
 
 void _initDownloadedBooksFeature() {
-  // Repositorio
+  // Repositorio libros
   sl.registerLazySingleton<DownloadedBooksRepository>(
-    () => DownloadedBooksRepositoryImpl(DownloadService()),
+    () => DownloadedBooksRepositoryImpl(sl()),
   );
-  // Usecase
+  // Usecase libros
   sl.registerLazySingleton(() => GetDownloadedBooksUseCase(sl()));
-  // Cubit
+  // Cubit libros
   sl.registerFactory(() => DownloadedBooksCubit(sl()));
+
+  // Repositorio capítulos
+  sl.registerLazySingleton<DownloadedChaptersRepository>(
+    () => DownloadedChaptersRepositoryImpl(sl()),
+  );
+  // Usecase capítulos
+  sl.registerLazySingleton(() => GetDownloadedChaptersUseCase(sl()));
+  // Cubit capítulos
+  sl.registerFactory(() => DownloadedChaptersCubit(sl()));
 }

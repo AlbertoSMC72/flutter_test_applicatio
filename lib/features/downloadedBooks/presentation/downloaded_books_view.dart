@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'cubit/downloaded_books_cubit.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import 'package:flutter_application_1/core/dependency_injection.dart';
+import 'package:go_router/go_router.dart';
 
 class DownloadedBooksView extends StatefulWidget {
   const DownloadedBooksView({Key? key}) : super(key: key);
@@ -149,76 +150,87 @@ class _DownloadedBooksViewState extends State<DownloadedBooksView> {
                                 children: [
                                   ...state.books.map((book) => Padding(
                                     padding: const EdgeInsets.only(bottom: 30),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF2A2A2A),
-                                        borderRadius: BorderRadius.circular(15),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.15),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: ListTile(
-                                        contentPadding: const EdgeInsets.all(16),
-                                        leading: book.coverImageBase64.isNotEmpty
-                                            ? ClipRRect(
-                                                borderRadius: BorderRadius.circular(10),
-                                                child: Image.memory(
-                                                  base64Decode(book.coverImageBase64),
-                                                  width: 50,
-                                                  height: 70,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              )
-                                            : const Icon(Icons.book, size: 40, color: Colors.white70),
-                                        title: Text(
-                                          book.title,
-                                          style: GoogleFonts.monomaniacOne(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Por: ${book.author}',
-                                              style: GoogleFonts.monomaniacOne(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                              ),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        context.push(
+                                          '/downloadedChapters',
+                                          extra: {
+                                            'bookId': book.id,
+                                            'bookTitle': book.title,
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF2A2A2A),
+                                          borderRadius: BorderRadius.circular(15),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.15),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 4),
                                             ),
-                                            if (book.genres.isNotEmpty)
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: 4.0),
-                                                child: Text(
-                                                  book.genres.join(', '),
-                                                  style: GoogleFonts.monomaniacOne(
-                                                    color: Colors.white38,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ),
                                           ],
                                         ),
-                                        trailing: IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          tooltip: 'Eliminar libro descargado',
-                                          onPressed: () async {
-                                            // Eliminar libro descargado
-                                            await context.read<DownloadedBooksCubit>().getDownloadedBooksUseCase.repository.deleteDownloadedBook(book.id);
-                                            context.read<DownloadedBooksCubit>().loadDownloadedBooks();
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Libro eliminado de descargas'),
-                                                backgroundColor: Colors.orange,
+                                        child: ListTile(
+                                          contentPadding: const EdgeInsets.all(16),
+                                          leading: book.coverImageBase64.isNotEmpty
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  child: Image.memory(
+                                                    base64Decode(book.coverImageBase64),
+                                                    width: 50,
+                                                    height: 70,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.book, size: 40, color: Colors.white70),
+                                          title: Text(
+                                            book.title,
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Por: ${book.author}',
+                                                style: GoogleFonts.monomaniacOne(
+                                                  color: Colors.white70,
+                                                  fontSize: 14,
+                                                ),
                                               ),
-                                            );
-                                          },
+                                              if (book.genres.isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 4.0),
+                                                  child: Text(
+                                                    book.genres.join(', '),
+                                                    style: GoogleFonts.monomaniacOne(
+                                                      color: Colors.white38,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          trailing: IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            tooltip: 'Eliminar libro descargado',
+                                            onPressed: () async {
+                                              // Eliminar libro descargado
+                                              await context.read<DownloadedBooksCubit>().getDownloadedBooksUseCase.repository.deleteDownloadedBook(book.id);
+                                              context.read<DownloadedBooksCubit>().loadDownloadedBooks();
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Libro eliminado de descargas'),
+                                                  backgroundColor: Colors.orange,
+                                                ),
+                                              );
+                                            },
+                                          ),
                                         ),
                                       ),
                                     ),

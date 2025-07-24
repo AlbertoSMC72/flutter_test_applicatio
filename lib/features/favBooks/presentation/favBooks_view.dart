@@ -98,183 +98,190 @@ class _FavBooksScreenState extends State<FavBooksScreen> {
                   }
                 },
                 color: const Color(0xFFECEC3D),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 100), // Espacio para el título
-                      
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3D165C),
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Mis Favoritos',
-                            style: GoogleFonts.monomaniacOne(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 30),
-                      
-                      // Lista de libros favoritos con estado
-                      BlocBuilder<FavBooksCubit, FavBooksState>(
-                        builder: (context, state) {
-                          if (state is FavBooksLoading) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(50),
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFECEC3D),
-                                ),
-                              ),
-                            );
-                          } else if (state is FavBooksLoaded) {
-                            if (state.books.isEmpty) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(50),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.favorite_border,
-                                        size: 64,
-                                        color: Colors.white54,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'No tienes libros favoritos aún',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.white54,
-                                          fontSize: 18,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Explora libros y dales like para verlos aquí',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.white38,
-                                          fontSize: 14,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final minHeight = constraints.maxHeight;
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: minHeight),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 100), // Espacio para el título
                             
-                            return Column(
-                              children: [
-                                // Lista de libros favoritos
-                                ...state.books.map((favBook) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 30),
-                                  child: BookInfoWriter(
-                                    title: favBook.book.title,
-                                    synopsis: favBook.book.description ?? 'Por: ${favBook.book.author.username}',
-                                    imageUrl: favBook.book.coverImage ?? '',
-                                    tags: favBook.book.genres != null && favBook.book.genres!.isNotEmpty
-                                        ? favBook.book.genres!.join(', ')
-                                        : 'Favorito',
-                                    isLiked: favBook.book.isLiked ?? true, // Usar el estado real
-                                    likesCount: favBook.book.likesCount ?? 0, // Usar el contador real
-                                    onTap: () {
-                                      context.push("/bookDetail", extra: {
-                                        'bookId': favBook.book.id,
-                                      });
-                                    },
-                                    onLikeToggle: () {
-                                      if (currentUserId != null) {
-                                        context.read<FavBooksCubit>().toggleBookLike(
-                                          currentUserId!,
-                                          favBook.book.id,
-                                        );
-                                      }
-                                    },
-                                    published: false,
-                                    onEdit: () {},
-                                    onTogglePublish: () {},
-                                    onDelete: () {},
-                                  ),
-                                )),
-                              ],
-                            );
-                          } else if (state is FavBooksError) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(50),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 64,
-                                      color: Colors.red,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Error al cargar los favoritos',
-                                      style: GoogleFonts.monomaniacOne(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      state.message,
-                                      style: GoogleFonts.monomaniacOne(
-                                        color: Colors.red,
-                                        fontSize: 14,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        if (currentUserId != null) {
-                                          context.read<FavBooksCubit>().getUserFavBooks(currentUserId!);
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFECEC3D),
-                                      ),
-                                      child: Text(
-                                        'Reintentar',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.black,
-                                        ),
-                                      ),
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3D165C),
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
+                                child: Text(
+                                  'Mis Favoritos',
+                                  style: GoogleFonts.monomaniacOne(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
                               ),
-                            );
-                          }
-                          
-                          return const SizedBox.shrink();
-                        },
+                            ),
+                            
+                            const SizedBox(height: 30),
+                            
+                            // Lista de libros favoritos con estado
+                            BlocBuilder<FavBooksCubit, FavBooksState>(
+                              builder: (context, state) {
+                                if (state is FavBooksLoading) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(50),
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFFECEC3D),
+                                      ),
+                                    ),
+                                  );
+                                } else if (state is FavBooksLoaded) {
+                                  if (state.books.isEmpty) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(50),
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              Icons.favorite_border,
+                                              size: 64,
+                                              color: Colors.white54,
+                                            ),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'No tienes libros favoritos aún',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.white54,
+                                                fontSize: 18,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Explora libros y dales like para verlos aquí',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.white38,
+                                                fontSize: 14,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  
+                                  return Column(
+                                    children: [
+                                      // Lista de libros favoritos
+                                      ...state.books.map((favBook) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 30),
+                                        child: BookInfoWriter(
+                                          title: favBook.book.title,
+                                          synopsis: favBook.book.description ?? 'Por: ${favBook.book.author.username}',
+                                          imageUrl: favBook.book.coverImage ?? '',
+                                          tags: favBook.book.genres != null && favBook.book.genres!.isNotEmpty
+                                              ? favBook.book.genres!.join(', ')
+                                              : 'Favorito',
+                                          isLiked: favBook.book.isLiked ?? true, // Usar el estado real
+                                          likesCount: favBook.book.likesCount ?? 0, // Usar el contador real
+                                          onTap: () {
+                                            context.push("/bookDetail", extra: {
+                                              'bookId': favBook.book.id,
+                                            });
+                                          },
+                                          onLikeToggle: () {
+                                            if (currentUserId != null) {
+                                              context.read<FavBooksCubit>().toggleBookLike(
+                                                currentUserId!,
+                                                favBook.book.id,
+                                              );
+                                            }
+                                          },
+                                          published: false,
+                                          onEdit: () {},
+                                          onTogglePublish: () {},
+                                          onDelete: () {},
+                                        ),
+                                      )),
+                                    ],
+                                  );
+                                } else if (state is FavBooksError) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(50),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            size: 64,
+                                            color: Colors.red,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'Error al cargar los favoritos',
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            state.message,
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: Colors.red,
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              if (currentUserId != null) {
+                                                context.read<FavBooksCubit>().getUserFavBooks(currentUserId!);
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFFECEC3D),
+                                            ),
+                                            child: Text(
+                                              'Reintentar',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+                                
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                            const SizedBox(height: 145),
+                          ],
+                        ),
                       ),
-                      
-                      const SizedBox(height: 145),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

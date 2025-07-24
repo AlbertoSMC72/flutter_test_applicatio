@@ -680,179 +680,179 @@ class _UserStoriesScreenState extends State<UserStoriesScreen> {
                   context.read<BooksCubit>().getUserWritingBooks();
                 },
                 color: const Color(0xFFECEC3D),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 100), // Espacio para el título
-                      
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3D165C),
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Tus Historias',
-                            style: GoogleFonts.monomaniacOne(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 30),
-                      
-                      // Lista de historias con estado
-                      BlocBuilder<BooksCubit, BooksState>(
-                        builder: (context, state) {
-                          if (state is BooksLoading) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(50),
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFECEC3D),
-                                ),
-                              ),
-                            );
-                          } else if (state is BooksWritingLoaded) {
-                            // AQUÍ ESTÁ EL CAMBIO PRINCIPAL - Usar BooksWritingLoaded en lugar de BooksLoaded
-                            if (state.books.isEmpty) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(50),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.book_outlined,
-                                        size: 64,
-                                        color: Colors.white54,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'No tienes historias creadas aún',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.white54,
-                                          fontSize: 18,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Toca el botón + para crear tu primera historia',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.white38,
-                                          fontSize: 14,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-                            
-                            return Column(
-                              children: [
-                                // Lista de libros
-                                ...state.books.map((book) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 30),
-                                  child: BookInfoWriter(
-                                    title: book.title,
-                                    synopsis: book.description,
-                                    imageUrl: book.coverImage ?? '', // Usar la imagen base64 del libro
-                                    tags: book.genres?.map((g) => g.name).join(', ') ?? 'Sin géneros',
-                                    published: book.published ?? false,
-                                    onTap: () {
-                                      context.push("/bookDetail", extra: {
-                                        'bookId': book.id,
-                                      });
-                                    },
-                                    onEdit: () {
-                                      _showEditBookModal(book);
-                                    },
-                                    onTogglePublish: () {
-                                      context.read<BooksCubit>().toggleBookPublication(
-                                        book.id!,
-                                        !(book.published ?? false),
-                                      );
-                                    },
-                                    onDelete: () {
-                                      _showDeleteConfirmation(book);
-                                    },
-                                  ),
-                                )),
-                              ],
-                            );
-                          } else if (state is BooksError) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(50),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 64,
-                                      color: Colors.red,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Error al cargar las historias',
-                                      style: GoogleFonts.monomaniacOne(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      state.message,
-                                      style: GoogleFonts.monomaniacOne(
-                                        color: Colors.red,
-                                        fontSize: 14,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        context.read<BooksCubit>().getUserWritingBooks();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFECEC3D),
-                                      ),
-                                      child: Text(
-                                        'Reintentar',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: Colors.black,
-                                        ),
-                                      ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final minHeight = constraints.maxHeight;
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: minHeight),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 100), // Espacio para el título
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF3D165C),
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
+                                child: Text(
+                                  'Tus Historias',
+                                  style: GoogleFonts.monomaniacOne(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
                               ),
-                            );
-                          }
-                          
-                          return const SizedBox.shrink();
-                        },
+                            ),
+                            const SizedBox(height: 30),
+                            BlocBuilder<BooksCubit, BooksState>(
+                              builder: (context, state) {
+                                if (state is BooksLoading) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(50),
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFFECEC3D),
+                                      ),
+                                    ),
+                                  );
+                                } else if (state is BooksWritingLoaded) {
+                                  if (state.books.isEmpty) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(50),
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              Icons.book_outlined,
+                                              size: 64,
+                                              color: Colors.white54,
+                                            ),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'No tienes historias creadas aún',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.white54,
+                                                fontSize: 18,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Toca el botón + para crear tu primera historia',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.white38,
+                                                fontSize: 14,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return Column(
+                                    children: [
+                                      ...state.books.map((book) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 30),
+                                        child: BookInfoWriter(
+                                          title: book.title,
+                                          synopsis: book.description,
+                                          imageUrl: book.coverImage ?? '',
+                                          tags: book.genres?.map((g) => g.name).join(', ') ?? 'Sin géneros',
+                                          published: book.published ?? false,
+                                          onTap: () {
+                                            context.push("/bookDetail", extra: {
+                                              'bookId': book.id,
+                                            });
+                                          },
+                                          onEdit: () {
+                                            _showEditBookModal(book);
+                                          },
+                                          onTogglePublish: () {
+                                            context.read<BooksCubit>().toggleBookPublication(
+                                              book.id!,
+                                              !(book.published ?? false),
+                                            );
+                                          },
+                                          onDelete: () {
+                                            _showDeleteConfirmation(book);
+                                          },
+                                        ),
+                                      )),
+                                      const SizedBox(height: 145),
+                                    ],
+                                  );
+                                } else if (state is BooksError) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(50),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            size: 64,
+                                            color: Colors.red,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'Error al cargar las historias',
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            state.message,
+                                            style: GoogleFonts.monomaniacOne(
+                                              color: Colors.red,
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              context.read<BooksCubit>().getUserWritingBooks();
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFFECEC3D),
+                                            ),
+                                            child: Text(
+                                              'Reintentar',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                            const SizedBox(height: 130),
+                          ],
+                        ),
                       ),
-                      
-                      const SizedBox(height: 145),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

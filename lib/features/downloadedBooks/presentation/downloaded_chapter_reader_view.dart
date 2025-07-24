@@ -28,7 +28,20 @@ class DownloadedChapterReaderView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Capítulo no encontrado.', style: TextStyle(color: Colors.white70)));
+            return SizedBox.expand(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Capítulo no encontrado.',
+                    style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
           }
           final chapter = snapshot.data!;
           return Padding(

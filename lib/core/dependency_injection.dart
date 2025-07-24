@@ -79,6 +79,13 @@ import '../features/downloadedBooks/domain/repositories/downloaded_chapters_repo
 import '../features/downloadedBooks/domain/usecases/get_downloaded_chapters_usecase.dart';
 import '../features/downloadedBooks/presentation/cubit/downloaded_chapters_cubit.dart';
 
+// Search Books feature
+import '../features/search/data/datasources/book_search_api_service.dart';
+import '../features/search/data/repositories/book_search_repository_impl.dart';
+import '../features/search/domain/repositories/book_search_repository.dart';
+import '../features/search/domain/usecases/search_books_usecase.dart';
+import '../features/search/presentation/cubit/book_search_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
@@ -202,6 +209,9 @@ sl.registerLazySingleton<Dio>(() {
 
   // Downloaded Books feature
   _initDownloadedBooksFeature();
+
+  // Search Books feature
+  _initBookSearchFeature();
 
   // Inyectar el usecase de capítulo en DownloadService
   sl<DownloadService>().setChapterDetailUseCase(sl<GetChapterDetailUseCase>());
@@ -447,4 +457,15 @@ void _initDownloadedBooksFeature() {
   sl.registerLazySingleton(() => GetDownloadedChaptersUseCase(sl()));
   // Cubit capítulos
   sl.registerFactory(() => DownloadedChaptersCubit(sl()));
+}
+
+void _initBookSearchFeature() {
+  // Data source
+  sl.registerLazySingleton<BookSearchApiService>(() => BookSearchApiService());
+  // Repository
+  sl.registerLazySingleton<BookSearchRepository>(() => BookSearchRepositoryImpl(sl()));
+  // Usecase
+  sl.registerLazySingleton(() => SearchBooksUseCase(sl()));
+  // Cubit
+  sl.registerFactory(() => BookSearchCubit(searchBooksUseCase: sl()));
 }

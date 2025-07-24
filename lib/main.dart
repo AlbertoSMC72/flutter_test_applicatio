@@ -10,7 +10,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'core/services/firebase_service.dart' show firebaseMessagingBackgroundHandler;
 
 // Core imports
 import 'core/dependency_injection.dart' as di;
@@ -37,7 +36,8 @@ import 'core/services/download_service.dart';
 import 'features/downloadedBooks/presentation/downloaded_chapters_view.dart';
 import 'features/downloadedBooks/presentation/downloaded_chapter_reader_view.dart';
 import 'features/downloadedBooks/presentation/cubit/downloaded_chapters_cubit.dart';
-import 'features/downloadedBooks/domain/usecases/get_downloaded_chapters_usecase.dart';
+import 'features/search/presentation/book_search_view.dart';
+import 'features/search/presentation/cubit/book_search_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,7 +78,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final GoRouter router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: '/home',
       routes: [
         GoRoute(
           path: '/login',
@@ -196,6 +196,14 @@ class MyApp extends StatelessWidget {
                   },
                 ),
               ),
+        ),
+        GoRoute(
+          path: '/search',
+          name: 'BookSearch',
+          builder: (context, state) => BlocProvider(
+            create: (context) => di.sl<BookSearchCubit>(),
+            child: const BookSearchView(),
+          ),
         ),
       ],
       errorBuilder:

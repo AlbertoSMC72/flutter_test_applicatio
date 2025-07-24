@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../domain/entities/downloaded_chapter_entity.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '../data/repositories/downloaded_chapters_repository_impl.dart';

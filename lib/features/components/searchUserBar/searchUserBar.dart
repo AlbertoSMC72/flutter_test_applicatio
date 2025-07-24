@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/services/storage_service.dart';
+import 'package:flutter/services.dart';
 
 class CustomTopBar extends StatefulWidget {
   final int notificationCount;
@@ -14,9 +16,10 @@ class CustomTopBar extends StatefulWidget {
   final VoidCallback? onAddFriend;
   final VoidCallback? onNotifications;
   final VoidCallback? onLogout;
+  final VoidCallback? onSearchIconTap;
 
   const CustomTopBar({
-    Key? key,
+    super.key,
     this.notificationCount = 0,
     this.searchHint = "Buscar Libro",
     this.onSearchTap,
@@ -28,17 +31,45 @@ class CustomTopBar extends StatefulWidget {
     this.onAddFriend,
     this.onNotifications,
     this.onLogout,
-  }) : super(key: key);
+    this.onSearchIconTap,
+  });
 
   @override
   State<CustomTopBar> createState() => _CustomTopBarState();
 }
 
 class _CustomTopBarState extends State<CustomTopBar> {
+  final StorageService _storageService = StorageServiceImpl();
+  late final TextEditingController _internalController;
+
+  @override
+  void initState() {
+    super.initState();
+    _internalController = widget.searchController ?? TextEditingController();
+  }
+
   void _navigateToProfile() {
     debugPrint('Navegando al perfil');
     context.push('/profile');
     widget.onViewProfile?.call();
+  }
+
+  Future<void> _defaultSearchAction() async {
+    final query = _internalController.text.trim();
+    if (query.length < 2) return;
+    final userData = await _storageService.getUserData();
+    final userId = userData['userId']?.toString() ?? '';
+    if (userId.isEmpty) return;
+    debugPrint('Navegando a la búsqueda con query: $query y userId: $userId');
+    context.push('/search', extra: {'query': query, 'userId': userId});
+  }
+
+  void _handleSearch() {
+    if (widget.onSearchIconTap != null) {
+      widget.onSearchIconTap!();
+    } else {
+      _defaultSearchAction();
+    }
   }
 
   @override
@@ -91,19 +122,24 @@ class _CustomTopBarState extends State<CustomTopBar> {
                 ),
                 child: Row(
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(left: searchIconPadding),
-                      child: Icon(
-                        Icons.search,
-                        color: Colors.black54,
-                        size: iconSize,
+                    GestureDetector(
+                      onTap: _handleSearch,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: searchIconPadding),
+                        child: Icon(
+                          Icons.search,
+                          color: Colors.black54,
+                          size: iconSize,
+                        ),
                       ),
                     ),
                     Expanded(
                       child: TextField(
-                        controller: widget.searchController,
+                        controller: _internalController,
                         onChanged: widget.onSearchChanged,
                         onTap: widget.onSearchTap,
+                        onSubmitted: (_) => _handleSearch(),
+                        textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
                           hintText: widget.searchHint,
                           hintStyle: GoogleFonts.monomaniacOne(

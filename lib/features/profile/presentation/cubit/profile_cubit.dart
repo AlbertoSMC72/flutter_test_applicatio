@@ -5,6 +5,7 @@ import 'package:flutter_application_1/core/services/storage_service.dart';
 import 'package:flutter_application_1/core/utils/image_utils.dart';
 import 'package:flutter_application_1/features/book/domain/entities/book_detail_entity.dart';
 import 'package:flutter_application_1/features/profile/data/datasourcers/profile_api_service.dart';
+import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
 
 import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
 import 'package:flutter_application_1/features/writenBook/domain/usecases/books_usecases.dart';
@@ -20,6 +21,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   final ProfileApiService profileApiService;
   final UpdateProfilePictureUseCase updateProfilePictureUseCase;
   final UpdateBannerUseCase updateBannerUseCase;
+  final FollowUserUseCase followUserUseCase;
 
   ProfileCubit({
     required this.storageService,
@@ -27,19 +29,21 @@ class ProfileCubit extends Cubit<ProfileState> {
     required this.getAllGenresUseCase,
     required this.profileApiService,
     required this.updateProfilePictureUseCase,
-    required this.updateBannerUseCase
+    required this.updateBannerUseCase,
+    required this.followUserUseCase
   }) : super(ProfileInitial());
 
   Future<void> loadProfile(String? userId) async {
+    print("[DEBUG_PROFILE] Cargando datos del usuario $userId");
     try {
       emit(ProfileLoading());
 
       final userData = await storageService.getUserData();
       final currentUserId = userData['userId'].toString();
-      print("userData: $currentUserId");
+      print("[DEBUG_PROFILE] userData: $currentUserId");
       
       final profileUserId = userId ?? currentUserId;
-      print("perfil?: $profileUserId y $currentUserId");
+      print("[DEBUG_PROFILE] perfil?: $profileUserId y $currentUserId");
       
       if (profileUserId == '' || profileUserId == currentUserId || profileUserId == 'null' || profileUserId == 'undefined') {
         print("[DEBUG_PROFILE] Cargando perfil del usuario logueado: $currentUserId");
@@ -80,9 +84,10 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   Future<void> _loadOtherProfile(String currentUserId, String profileUserId) async {
-    final profile = await profileApiService.getUserProfile(profileUserId);
-    final isFollowed = await _checkIfFollowing(profileUserId);
-    
+    debugPrint('[DEBUG_PROFILE] Cargando perfil externo');
+    debugPrint('[DEBUG_PROFILE] Datos recibidos: currentUserId: $currentUserId, profileUserId: $profileUserId');
+    final profile = await profileApiService.getUserProfile(currentUserId, profileUserId);
+    debugPrint('[DEBUG_PROFILE] currentUserId: $currentUserId, profileUserId: $profileUserId');
     debugPrint("Usuario visitado: "
         "ID: ${profile.id}, "
         "Nombre: ${profile.username}, "
@@ -105,68 +110,59 @@ class ProfileCubit extends Cubit<ProfileState> {
       ownBooks: profile.publishedBooks,
       favoriteBooks: [],
       isOwnProfile: false,
-      isFollowed: isFollowed,
-      showFollowOptions: false,
+      isFollowed: profile.isFollwing,
+      showFollowOptions: profile.isFollwing,
       allGenres: [],
     ));
   }
 
-  Future<bool> _checkIfFollowing(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return false; 
-  }
-
-  void toggleFollowOptions() {
-    final currentState = state;
-    if (currentState is ProfileLoaded) {
-      emit(currentState.copyWith(
-        showFollowOptions: !currentState.showFollowOptions,
-      ));
+  void toggleFollowOptions(isFollowing) {
+      final currentState = state;
+      if (currentState is ProfileLoaded) {
+        emit(currentState.copyWith(
+          showFollowOptions: !currentState.showFollowOptions,
+        ));
+      }
     }
-  }
 
-  Future<void> toggleFollow(String option) async {
+    Future<void> toggleFollow(String action) async {
+    debugPrint('[DEBUG_FOLLOW] Acción de seguir realizada con la accion: $action');
     final currentState = state;
     if (currentState is! ProfileLoaded) return;
 
     try {
-      if (currentState.isFollowed || option == 'unfollow') {
-        await _unfollowUser(currentState.profileUserId);
+      if (action == 'unfollow') {
+        // Dejar de seguir
+        final response = await _unfollowUser(
+          currentState.currentUserId,                    
+          currentState.profileUserId,       
+        );
         
         emit(currentState.copyWith(
           isFollowed: false,
-          followersCount: currentState.followersCount > 0 ? currentState.followersCount - 1 : 0,
+          followersCount: response.followersCount, 
           showFollowOptions: false,
         ));
         
         emit(ProfileFollowSuccess(
-          message: 'Has dejado de seguir a este usuario',
+          message: response.message,
           isFollowed: false,
         ));
       } else {
-        await _followUser(currentState.profileUserId, option);
+        // Seguir
+        final response = await _followUser(
+          currentState.currentUserId,                  
+          currentState.profileUserId,       
+        );
         
         emit(currentState.copyWith(
           isFollowed: true,
-          followersCount: currentState.followersCount + 1,
+          followersCount: response.followersCount, 
           showFollowOptions: false,
         ));
 
-        String message = '';
-        switch (option) {
-          case 'Todas':
-            message = 'Ahora recibirás todas las notificaciones';
-            break;
-          case 'Personalizadas':
-            message = 'Configurando notificaciones personalizadas';
-            break;
-          case 'Ninguna':
-            message = 'Siguiendo sin notificaciones';
-            break;
-        }
-
         emit(ProfileFollowSuccess(
-          message: message,
+          message: response.message,
           isFollowed: true,
         ));
       }
@@ -175,14 +171,48 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> _followUser(String userId, String notificationType) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    debugPrint('[DEBUG_PROFILE] Siguiendo usuario $userId con notificaciones: $notificationType');
+  Future<FollowResponse> _followUser(String loggedUserId, String targetUserId) async {
+    debugPrint('[DEBUG_FOLLOW] Usuario loggueado: $loggedUserId, usuario a seguir: $targetUserId');
+    try {      
+      final response = await followUserUseCase.call(
+        int.parse(loggedUserId),    
+        int.parse(targetUserId),   
+      );
+      
+      if (!response.success) {
+        throw Exception(response.message);
+      }
+      refreshProfile();
+      debugPrint('[DEBUG_FOLLOW] Follow exitoso: ${response.message}');
+      return response;
+      
+    } catch (e) {
+      debugPrint('[DEBUG_FOLLOW] Error al seguir usuario: $e');
+      rethrow;
+    }
   }
 
-  Future<void> _unfollowUser(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    debugPrint('[DEBUG_PROFILE] Dejando de seguir usuario $userId');
+  Future<FollowResponse> _unfollowUser(String loggedUserId, String targetUserId) async {
+    try {
+      debugPrint('[DEBUG_FOLLOW] Usuario $loggedUserId dejando de seguir a $targetUserId');
+      
+      final response = await followUserUseCase.call(
+        int.parse(loggedUserId),    
+        int.parse(targetUserId),  
+      );
+      
+      if (!response.success) {
+        throw Exception(response.message);
+      }
+      
+      refreshProfile();
+      debugPrint('[DEBUG_FOLLOW] Unfollow exitoso: ${response.message}');
+      return response;
+      
+    } catch (e) {
+      debugPrint('[DEBUG_FOLLOW] Error al dejar de seguir usuario: $e');
+      rethrow;
+    }
   }
 
   Future<void> refreshProfile() async {

@@ -76,14 +76,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _handleFollowButtonTap() {
+  void _handleFollow(bool isFollowing) {
+    print('[DEBUG] _handleFollow - isFollowing: $isFollowing');
     final cubit = context.read<ProfileCubit>();
-    cubit.toggleFollowOptions();
-  }
-
-  void _handleFollowOption(String option) {
-    final cubit = context.read<ProfileCubit>();
-    cubit.toggleFollow(option);
+    cubit.toggleFollow(isFollowing ? 'unfollow' : 'follow');
   }
 
   void _showChangeBannerImageDialog() {
@@ -248,54 +244,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildFollowOption(String option) {
-    IconData icon;
-    switch (option) {
-      case 'Todas':
-        icon = Icons.notifications_active;
-        break;
-      case 'Personalizadas':
-        icon = Icons.notifications;
-        break;
-      case 'Ninguna':
-        icon = Icons.notifications_off;
-        break;
-      default:
-        icon = Icons.circle;
-    }
-    return Container(
-      width: double.infinity,
-      height: 40,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _handleFollowOption(option),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: AppColors.textPrimary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  option,
-                  style: GoogleFonts.monomaniacOne(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildOwnBooksGrid(List ownBooks) {
     final List<List> bookColumns = [];
     for (int i = 0; i < ownBooks.length; i += 2) {
@@ -435,6 +383,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final favoriteGenres = state.favoriteGenres;
           final ownBooks = state.ownBooks;
           final favoriteBooks = state.favoriteBooks;
+
+          debugPrint('[DEBUG_FOLLOW] '
+          'profileImageUrl: $profileImageUrl, '
+          'bannerImageUrl: $bannerImageUrl, '
+          'isOwnProfile: $isOwnProfile, '
+          'username: $username, '
+          'friendCode: $friendCode, '
+          'bio: $bio, '
+          'friendsCount: $friendsCount, '
+          'followersCount: $followersCount, '
+          'showFollowOptions: $showFollowOptions, '
+          'isFollowed: $isFollowed, '
+          'favoriteGenres: ${favoriteGenres.map((g) => g.name).join(', ')}, '
+          'ownBooks: ${ownBooks.length}, '
+          'favoriteBooks: ${favoriteBooks.length}');
+
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -711,7 +675,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         borderRadius: BorderRadius.circular(15),
-                                        onTap: isOwnProfile ? _showEditProfileModal : _handleFollowButtonTap,
+                                        onTap: isOwnProfile ? _showEditProfileModal : () => _handleFollow(isFollowed),
                                         child: Center(
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -754,39 +718,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               color: AppColors.shadowColor,
                                               blurRadius: 8,
                                               offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            _buildFollowOption('Todas'),
-                                            _buildFollowOption('Personalizadas'),
-                                            _buildFollowOption('Ninguna'),
-                                            Container(
-                                              width: double.infinity,
-                                              height: 40,
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  borderRadius: const BorderRadius.only(
-                                                    bottomLeft: Radius.circular(15),
-                                                    bottomRight: Radius.circular(15),
-                                                  ),
-                                                  onTap: () {
-                                                    context.read<ProfileCubit>().toggleFollowOptions();
-                                                  },
-                                                  child: Center(
-                                                    child: Text(
-                                                      'Anular suscripción',
-                                                      style: GoogleFonts.monomaniacOne(
-                                                        color: AppColors.textPrimary,
-                                                        fontSize: 16,
-                                                        fontWeight: FontWeight.w400,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
                                             ),
                                           ],
                                         ),

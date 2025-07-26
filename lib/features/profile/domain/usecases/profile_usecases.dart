@@ -1,3 +1,4 @@
+import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
 import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
 import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
 
@@ -20,9 +21,9 @@ class GetUserProfileUseCase {
 
   GetUserProfileUseCase({required this.repository});
 
-  Future<Profile> call(String userId) async {
+  Future<Profile> call(String userId, String requesterId) async {
     try {
-      return await repository.getUserProfile(userId);
+      return await repository.getUserProfile(userId, requesterId);
     } catch (e) {
       rethrow;
     }
@@ -225,5 +226,35 @@ class UpdateBannerUseCase {
     
     final padding = cleanBase64.endsWith('==') ? 2 : cleanBase64.endsWith('=') ? 1 : 0;
     return ((cleanBase64.length * 3) ~/ 4) - padding;
+  }
+}
+
+class FollowUserUseCase {
+  final ProfileRepository repository;
+
+  FollowUserUseCase({required this.repository});
+
+  Future<FollowResponse> call(int userId, int targetUserId) async {
+    try {
+      _validateFollowRequest(userId, targetUserId);
+      
+      return await repository.followUser(userId, targetUserId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  void _validateFollowRequest(int userId, int targetUserId) {
+    if (userId <= 0) {
+      throw Exception('ID de usuario inválido');
+    }
+    
+    if (targetUserId <= 0) {
+      throw Exception('ID de usuario objetivo inválido');
+    }
+    
+    if (userId == targetUserId) {
+      throw Exception('No puedes seguirte a ti mismo');
+    }
   }
 }

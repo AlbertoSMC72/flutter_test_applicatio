@@ -12,6 +12,7 @@ class Profile {
   final List<OwnBook> ownBooks;
   final List<OwnBook> publishedBooks;
   final ProfileStats stats;
+  final bool isFollwing;
 
   Profile({
     required this.id,
@@ -27,6 +28,7 @@ class Profile {
     required this.ownBooks,
     required this.publishedBooks,
     required this.stats,
+    required this.isFollwing
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,7 @@ class Profile {
         stats: json['stats'] != null 
             ? ProfileStats.fromJson(json['stats'] as Map<String, dynamic>)
             : ProfileStats.empty(),
+        isFollwing: json['isFollowing'] ?? false
       );
     } catch (e) {
       print('[ERROR] Error parsing profile: $e');

@@ -45,7 +45,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('✅ Firebase inicializado correctamente');
+    debugPrint('✅ Firebase inicializado correctamente'); 
 
     // Inicializar notificaciones
     final firebaseService = di.sl<FirebaseServiceImpl>();

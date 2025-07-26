@@ -286,6 +286,7 @@ void _initProfileFeature() {
   sl.registerLazySingleton(() => UpdateProfileUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateProfilePictureUseCase(repository: sl()));
   sl.registerLazySingleton(() => UpdateBannerUseCase(repository: sl()));
+  sl.registerLazySingleton(() => FollowUserUseCase(repository: sl()));
 
   // Cubit
   sl.registerFactory(() => ProfileCubit(
@@ -294,7 +295,8 @@ void _initProfileFeature() {
     getAllGenresUseCase: sl(),
     profileApiService: sl(),
     updateProfilePictureUseCase: sl(),
-    updateBannerUseCase: sl()
+    updateBannerUseCase: sl(),
+    followUserUseCase: sl()
   ));
 }
 

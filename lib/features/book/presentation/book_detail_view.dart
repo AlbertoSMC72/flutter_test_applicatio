@@ -3,19 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../core/services/download_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/image_utils.dart';
-import '../../book/data/datasources/book_detail_api_service.dart';
-import '../../book/data/repositories/book_detail_repository_impl.dart';
-import '../../book/domain/usecases/book_detail_usecases.dart';
 import '../../book/domain/entities/book_detail_entity.dart';
-import '../../writenBook/domain/usecases/books_usecases.dart' as writen_book;
-import '../../writenBook/data/repositories/books_repository_impl.dart' as writen_book_repo;
-import '../../writenBook/data/datasources/books_api_service.dart' as writen_book_api;
+import '../../writenBook/domain/usecases/books_usecases.dart' show GetAllGenresUseCase;
 import '../../writenBook/domain/entities/genre_entity.dart' as writen_book_entity;
 import 'cubit/book_detail_cubit.dart';
 import 'cubit/book_detail_state.dart';
@@ -28,7 +24,7 @@ import 'package:get_it/get_it.dart';
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
 
-  const BookDetailScreen({Key? key, required this.bookId}) : super(key: key);
+  const BookDetailScreen({super.key, required this.bookId});
 
   @override
   State<BookDetailScreen> createState() => _BookDetailScreenState();
@@ -41,74 +37,57 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   final TextEditingController editDescriptionController =
       TextEditingController();
   final TextEditingController newGenreController = TextEditingController();
+  bool _isBookDownloaded = false;
 
   late final BookDetailCubit _cubit;
   
   // Caso de uso para obtener géneros (similar al de writenBook)
-  late final writen_book.GetAllGenresUseCase _getAllGenresUseCase;
+  late final GetAllGenresUseCase _getAllGenresUseCase;
   BookLikesCubit? _likesCubit;
   String? _userId;
+
+  Map<String, bool> _downloadedChapters = {};
 
   @override
   void initState() {
     super.initState();
     
-    // Inicializar caso de uso para géneros
-    _getAllGenresUseCase = writen_book.GetAllGenresUseCase(
-      writen_book_repo.BooksRepositoryImpl(
-        apiService: writen_book_api.BooksApiServiceImpl(),
-      ),
-    );
-    
-    _cubit = BookDetailCubit(
-      getBookDetailUseCase: GetBookDetailUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      updateBookUseCase: UpdateBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      publishBookUseCase: PublishBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      addChapterUseCase: AddChapterUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      toggleChapterPublishUseCase: ToggleChapterPublishUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      deleteChapterUseCase: DeleteChapterUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      deleteBookUseCase: DeleteBookUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      addCommentUseCase: AddCommentUseCase(
-        repository: BookDetailRepositoryImpl(
-          apiService: BookDetailApiServiceImpl(),
-        ),
-      ),
-      storageService: StorageServiceImpl(),
-    );
+    // Obtener instancias desde GetIt
+    _getAllGenresUseCase = GetIt.I<GetAllGenresUseCase>();
+    _cubit = GetIt.I<BookDetailCubit>();
     _cubit.loadBookDetail(widget.bookId);
     StorageServiceImpl().getUserId().then((id) {
       setState(() {
         _userId = id;
         _likesCubit = GetIt.I<BookLikesCubit>();
       });
+    });
+    // Verificar si el libro ya está descargado
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final isDownloaded = await DownloadService().isBookDownloaded(widget.bookId);
+      if (mounted) {
+        setState(() {
+          _isBookDownloaded = isDownloaded;
+        });
+      }
+    });
+    // Verificar capítulos descargados
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_cubit.state is BookDetailLoaded) {
+        final book = (_cubit.state as BookDetailLoaded).bookDetail;
+        if (book.chapters != null) {
+          final Map<String, bool> chapterStates = {};
+          for (final chapter in book.chapters!) {
+            final isDownloaded = await DownloadService().isChapterDownloaded(chapter.id);
+            chapterStates[chapter.id] = isDownloaded;
+          }
+          if (mounted) {
+            setState(() {
+              _downloadedChapters = chapterStates;
+            });
+          }
+        }
+      }
     });
   }
 
@@ -809,7 +788,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
@@ -943,40 +922,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            // Botón seguir libro (like)
-                            if (!isAuthor && _userId != null)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      likesState.isBookLiked ? Icons.favorite : Icons.favorite_border,
-                                      color: likesState.isBookLiked ? Colors.red : Colors.grey,
-                                      size: 32,
-                                    ),
-                                    tooltip: likesState.isBookLiked ? 'Dejar de seguir' : 'Seguir',
-                                    onPressed: likesState.loading ? null : () {
-                                      _likesCubit!.toggleBook(_userId!, book.id);
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    likesState.isBookLiked ? 'Siguiendo' : 'Seguir',
-                                    style: GoogleFonts.monomaniacOne(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    '${likesState.bookLikesCount} seguidores',
-                                    style: GoogleFonts.monomaniacOne(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
+
                             // Imagen
                             Container(
                               width: 150,
@@ -991,19 +937,56 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   ),
                                 ],
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: SizedBox(
-                                  width: 150,
-                                  height: 200,
-                                  child:
-                                      (book.coverImage != null &&
-                                              book.coverImage!.isNotEmpty)
+                              child: Stack(
+                                alignment: Alignment.bottomCenter,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: SizedBox(
+                                      width: 150,
+                                      height: 200,
+                                      child: (book.coverImage != null && book.coverImage!.isNotEmpty)
                                           ? Image.memory(
-                                            base64Decode(book.coverImage!),
-                                          )
+                                              base64Decode(book.coverImage!),
+                                              fit: BoxFit.cover,
+                                              width: 150,
+                                              height: 200,
+                                            )
                                           : const Icon(Icons.book, size: 50),
-                                ),
+                                    ),
+                                  ),
+                                  // Seguidores (solo para lectores)
+                                  if (!isAuthor && _userId != null)
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      alignment: Alignment.bottomCenter,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                bottom: BorderSide(
+                                                  color: Colors.white70,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '${likesState.bookLikesCount} likes',
+                                              style: GoogleFonts.monomaniacOne(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -1084,8 +1067,80 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 15),
-                            // Autor
+                            
+                            const SizedBox(height: 20),
+                            // Botones de acción (seguir y descargar)
+                            if (!isAuthor && _userId != null)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Botón seguir libro (solo ícono)
+                                  IconButton(
+                                    icon: Icon(
+                                      likesState.isBookLiked ? Icons.favorite : Icons.favorite_border,
+                                      color: likesState.isBookLiked ? Colors.red : Colors.grey,
+                                      size: 32,
+                                    ),
+                                    tooltip: likesState.isBookLiked ? 'Dejar de seguir' : 'Seguir libro',
+                                    onPressed: likesState.loading ? null : () {
+                                      _likesCubit!.toggleBook(_userId!, book.id);
+                                    },
+                                  ),
+                                  const SizedBox(width: 16),
+                                  // Botón descargar
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.download,
+                                      color: _isBookDownloaded ? Colors.blue : Colors.grey,
+                                      size: 40,
+                                    ),
+                                    tooltip: _isBookDownloaded ? 'Eliminar descarga' : 'Descargar libro',
+                                    onPressed: () async {
+                                      if (_isBookDownloaded) {
+                                        // Borrar libro de la base local
+                                        await DownloadService().deleteBook(book.id);
+                                        if (mounted) {
+                                          setState(() {
+                                            _isBookDownloaded = false;
+                                          });
+                                        }
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Libro eliminado de descargas'),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      } else {
+                                        try {
+                                          await DownloadService().saveBook(book);
+                                          if (mounted) {
+                                            setState(() {
+                                              _isBookDownloaded = true;
+                                            });
+                                          }
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Libro descargado correctamente'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error al descargar:  [${e.toString()}]'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            
+                            const SizedBox(height: 20),
+                            
+                            // Autor - Adaptable al contenido
                             GestureDetector(
                               onTap: () {
                                 if (book.authorId.isNotEmpty) {
@@ -1096,9 +1151,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 }
                               },
                               child: Container(
+                                width: double.infinity,
                                 margin: const EdgeInsets.symmetric(horizontal: 15),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                                  vertical: 12,
                                   horizontal: 20,
                                 ),
                                 decoration: BoxDecoration(
@@ -1115,13 +1171,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      'Por: ${book.author?.username ?? 'Autor Desconocido'}',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.monomaniacOne(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
+                                    Flexible(
+                                      child: Text(
+                                        'Por: ${book.author?.username ?? 'Autor Desconocido'}',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.monomaniacOne(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1219,6 +1279,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               itemCount: book.chapters?.length ?? 0,
                               itemBuilder: (context, index) {
                                 final chapter = book.chapters![index];
+                                final chapterId = chapter.id;
+                                final isDownloaded = _downloadedChapters[chapterId] ?? false;
                                 return Card(
                                   margin: const EdgeInsets.symmetric(
                                     horizontal: 15,
@@ -1234,52 +1296,90 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                                   : 'No publicado',
                                             )
                                             : null,
-                                    trailing: isAuthor && chapter.published != null
-  ? Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: Icon(
-            chapter.published == true ? Icons.visibility : Icons.visibility_off,
-            color: chapter.published == true ? Colors.green : Colors.grey,
-          ),
-          tooltip: chapter.published == true ? 'Despublicar' : 'Publicar',
-          onPressed: () => _cubit.toggleChapterPublish(
-            chapter.id,
-            !(chapter.published ?? false),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          tooltip: 'Eliminar capítulo',
-          onPressed: () => _cubit.deleteChapter(chapter.id),
-        ),
-      ],
-    )
-  : !isAuthor && _userId != null
-    ? Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(
-              (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
-                ? Icons.favorite
-                : Icons.favorite_border,
-              color: (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
-                ? Colors.red
-                : Colors.grey,
-            ),
-            onPressed: likesState.loading ? null : () {
-              _likesCubit!.toggleChapter(_userId!, int.parse(chapter.id));
-            },
-          ),
-          Text(
-            '${likesState.chaptersLikeStatus[int.parse(chapter.id)]?['likesCount'] ?? 0}',
-            style: TextStyle(color: Colors.white),
-          ),
-        ],
-      )
-    : null,
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isAuthor && chapter.published != null) ...[
+                                          IconButton(
+                                            icon: Icon(
+                                              chapter.published == true ? Icons.visibility : Icons.visibility_off,
+                                              color: chapter.published == true ? Colors.green : Colors.grey,
+                                            ),
+                                            tooltip: chapter.published == true ? 'Despublicar' : 'Publicar',
+                                            onPressed: () => _cubit.toggleChapterPublish(
+                                              chapter.id,
+                                              !(chapter.published ?? false),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            tooltip: 'Eliminar capítulo',
+                                            onPressed: () => _cubit.deleteChapter(chapter.id),
+                                          ),
+                                        ]
+                                        else if (!isAuthor && _userId != null) ...[
+                                          IconButton(
+                                            icon: Icon(
+                                              (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: (likesState.chaptersLikeStatus[int.parse(chapter.id)]?['isLiked'] ?? false)
+                                                  ? Colors.red
+                                                  : Colors.grey,
+                                            ),
+                                            onPressed: likesState.loading ? null : () {
+                                              _likesCubit!.toggleChapter(_userId!, int.parse(chapter.id));
+                                            },
+                                          ),
+                                          Text(
+                                            '${likesState.chaptersLikeStatus[int.parse(chapter.id)]?['likesCount'] ?? 0}',
+                                            style: const TextStyle(color: Colors.white),
+                                          ),
+                                        ],
+                                        // Botón de descarga de capítulo (siempre visible)
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.download,
+                                            color: isDownloaded ? Colors.blue : Colors.grey,
+                                          ),
+                                          tooltip: isDownloaded ? 'Eliminar descarga' : 'Descargar capítulo',
+                                          onPressed: () async {
+                                            if (isDownloaded) {
+                                              await DownloadService().deleteChapter(chapterId);
+                                              setState(() {
+                                                _downloadedChapters[chapterId] = false;
+                                              });
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Capítulo eliminado de descargas'),
+                                                  backgroundColor: Colors.orange,
+                                                ),
+                                              );
+                                            } else {
+                                              try {
+                                                await DownloadService().saveChapterById(book.id, chapterId);
+                                                setState(() {
+                                                  _downloadedChapters[chapterId] = true;
+                                                });
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Capítulo descargado correctamente'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                              } catch (e) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Error al descargar capítulo: [${e.toString()}]'),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                     onTap: () {
                                       GoRouter.of(context).push(
                                         '/chapterReader',

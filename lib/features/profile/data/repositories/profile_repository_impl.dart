@@ -1,4 +1,5 @@
 import 'package:flutter_application_1/features/profile/data/datasourcers/profile_api_service.dart';
+import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
 import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
 import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
 
@@ -18,9 +19,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Profile> getUserProfile(String userId) async {
+  Future<Profile> getUserProfile(String userId, String requesterId) async {
     try {
-      final result = await apiService.getUserProfile(userId);
+      final result = await apiService.getUserProfile(userId, requesterId);
       return result;
     } catch (e) {
       rethrow;
@@ -51,6 +52,16 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<Profile> updateBanner(String userId, String imagePath) async {
     try {
       final result = await apiService.updateBanner(userId, imagePath);
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<FollowResponse> followUser(int userId, int targetUserId) async {
+    try {
+      final result = await apiService.followUser(userId, targetUserId);
       return result;
     } catch (e) {
       rethrow;

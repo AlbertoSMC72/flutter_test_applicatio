@@ -1,8 +1,7 @@
 {
     "workbench.colorCustomizations": {
-        "activityBar.background": "#530086",
-        "titleBar.activeBackground": "#860dd1",
+        "activityBar.background": "#2A2F20",
+        "titleBar.activeBackground": "#3A422D",
         "titleBar.activeForeground": "#F9FAF8"
-    },
-    "cmake.sourceDirectory": "C:/Users/alber/Downloads/Test/flutter_application_1/windows"
+    }
 }

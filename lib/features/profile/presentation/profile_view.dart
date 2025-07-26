@@ -2,22 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
 import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
-import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
+import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:flutter_application_1/features/profile/presentation/cubit/profile_state.dart';
+import 'package:flutter_application_1/features/profile/presentation/widgets/edit_profile_modal.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/services/storage_service.dart';
-import '../../../core/dependency_injection.dart' as di;
 import '../../components/navigationBar/navigationBar.dart';
-import '../../../features/writenBook/domain/usecases/books_usecases.dart';
-import '../../../features/writenBook/domain/entities/genre_entity.dart';
-import '../../../features/profile/data/datasourcers/profile_api_service.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import '../../../core/utils/image_utils.dart';
+
 
 class ProfileScreen extends StatefulWidget {
-  final String? userId; 
+  final String? userId;
 
   const ProfileScreen({
     super.key,
@@ -30,38 +26,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController searchController = TextEditingController();
-  final StorageService _storageService = di.sl<StorageService>();
-  final GetProfileUseCase _getProfileUseCase = di.sl<GetProfileUseCase>();
-  final GetAllGenresUseCase _getAllGenresUseCase = di.sl<GetAllGenresUseCase>();
-  List<GenreEntity> _allGenres = [];
-  
-  bool _isLoading = true;
-  bool _isOwnProfile = false;
-  bool _isFollowed = false;
-  bool _showFollowOptions = false;
-  
-  String _currentUserId = '';
-  String _profileUserId = '';
-  String _username = '';
-  String _friendCode = '';
-  String _bio = '';
-  String _profileImageUrl = '';
-  String _bannerImageUrl = '';
-  int _friendsCount = 0;
-  int _followersCount = 0;
-  List<GenreEntity> _favoriteGenres = [];
-  List<OwnBook> _ownBooks = [];
-  List<Book> _favoriteBooks = [];
-  final ProfileApiService _profileApiService = di.sl<ProfileApiService>();
-  final UpdateProfilePictureUseCase _updateProfilePictureUseCase = di.sl<UpdateProfilePictureUseCase>();
-  final UpdateBannerUseCase _updateBannerUseCase = di.sl<UpdateBannerUseCase>();
 
   @override
   void initState() {
     super.initState();
-    _loadProfileData().then((_) {
-      debugPrint("username después de cargar: $_username");
-    });
+    context.read<ProfileCubit>().loadProfile(widget.userId);
   }
 
   @override
@@ -70,400 +39,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _loadProfileData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final userData = await _storageService.getUserData();
-      _currentUserId = userData['userId'] ?? '';
-      
-      _profileUserId = widget.userId ?? _currentUserId;
-      _isOwnProfile = _profileUserId == _currentUserId;
-      
-      if (_isOwnProfile) {
-        final logUserProfile = await _getProfileUseCase.call(userData['userId']!);
-        
-        // Actualiza las variables de estado
-        setState(() {
-          _username = logUserProfile.username;
-          _friendCode = logUserProfile.friendCode;
-          _bio = logUserProfile.biography ?? '';
-          _profileImageUrl = logUserProfile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
-          _bannerImageUrl = logUserProfile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
-          _friendsCount = logUserProfile.stats?.friendsCount ?? 0;
-          _followersCount = logUserProfile.stats?.followersCount ?? 0;
-          _favoriteGenres = (logUserProfile.favoriteGenres as List)
-              .map((g) => GenreEntity(
-                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
-                  name: g.name))
-              .toList();
-          _ownBooks = logUserProfile.ownBooks;
-          _favoriteBooks = logUserProfile.likedBooks;
-        });
-        
-        debugPrint("Usuario loggeado: "
-            // "ID: 24{logUserProfile.id}, "
-            // "Nombre: 24{logUserProfile.username}, "
-            // "Biografía: 24{logUserProfile.biography}, "
-            // "Imagen de perfil: 24{logUserProfile.profilePicture}, "
-            // "Banner: 24{logUserProfile.banner}, "
-            // "Géneros favoritos: 24{logUserProfile.favoriteGenres}, "
-            "Libros propios: 24{logUserProfile.ownBooks[0].coverImage} ");
-            // "Libros favoritos: 24{logUserProfile.likedBooks}");
-      } else {
-        final profile = await _profileApiService.getUserProfile(_profileUserId);
-        
-        // Actualiza las variables de estado
-        setState(() {
-          _username = profile.username;
-          _friendCode = profile.friendCode;
-          _bio = profile.biography ?? '';
-          _profileImageUrl = profile.profilePicture ?? 'https://placehold.co/150x150?text=Perfil+desconocido';
-          _bannerImageUrl = profile.banner ?? 'https://placehold.co/411x163?text=Portada+desconocida';
-          _friendsCount = profile.stats?.friendsCount ?? 0;
-          _followersCount = profile.stats?.followersCount ?? 0;
-          _favoriteGenres = (profile.favoriteGenres as List)
-              .map((g) => GenreEntity(
-                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
-                  name: g.name))
-              .toList();
-          _ownBooks = profile.publishedBooks;
-        });
-        
-        debugPrint("Usuario visitado: "
-            "ID: 24{profile.id}, "
-            "Nombre: 24{profile.username}, "
-            "Biografía: 24{profile.biography}, "
-            "Imagen de perfil: 24{profile.profilePicture}, "
-            "Banner: 24{profile.banner}, "
-            "Géneros favoritos: 24{profile.favoriteGenres.map((g) => g.name).join(', ')}");
-        
-        _isFollowed = await _checkIfFollowing(_profileUserId);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-
-    } catch (e) {
-      debugPrint('[DEBUG_PROFILE] Error cargando perfil: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cargar el perfil: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-  
-  Future<bool> _checkIfFollowing(String userId) async {
-    // Simular verificación en el backend
-    await Future.delayed(const Duration(milliseconds: 500));
-    return false; // Por defecto no seguimos a nadie
-  }
-
-  Future<void> _toggleFollow(String option) async {
-    try {
-      if (_isFollowed) {
-        // Dejar de seguir
-        await _unfollowUser(_profileUserId);
-        setState(() {
-          _isFollowed = false;
-          _followersCount = _followersCount > 0 ? _followersCount - 1 : 0;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Has dejado de seguir a este usuario'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      } else {
-        // Seguir con opción específica
-        await _followUser(_profileUserId, option);
-        setState(() {
-          _isFollowed = true;
-          _followersCount++;
-        });
-
-        String message = '';
-        switch (option) {
-          case 'Todas':
-            message = 'Ahora recibirás todas las notificaciones';
-            break;
-          case 'Personalizadas':
-            message = 'Configurando notificaciones personalizadas';
-            break;
-          case 'Ninguna':
-            message = 'Siguiendo sin notificaciones';
-            break;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  void _updateBannerImage(String source) {
+    final cubit = context.read<ProfileCubit>();
+    final state = cubit.state;
+    if (state is ProfileLoaded) {
+      cubit.updateBannerImage(state.profileUserId, source);
     }
   }
 
-  Future<void> _followUser(String userId, String notificationType) async {
-    // Simular llamada al backend para seguir usuario
-    await Future.delayed(const Duration(milliseconds: 500));
-    debugPrint('[DEBUG_PROFILE] Siguiendo usuario $userId con notificaciones: $notificationType');
-  }
-
-  Future<void> _unfollowUser(String userId) async {
-    // Simular llamada al backend para dejar de seguir
-    await Future.delayed(const Duration(milliseconds: 500));
-    debugPrint('[DEBUG_PROFILE] Dejando de seguir usuario $userId');
-  }
-
-  Future<void> _showEditProfileModal() async {
-    final TextEditingController usernameController = TextEditingController(text: _username);
-    final TextEditingController bioController = TextEditingController(text: _bio);
-
-    // Cargar todos los géneros disponibles si no están cargados
-    if (_allGenres.isEmpty) {
-      try {
-        _allGenres = await _getAllGenresUseCase.call();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cargar géneros: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+  void _updateProfileImage(String source) {
+    final cubit = context.read<ProfileCubit>();
+    final state = cubit.state;
+    if (state is ProfileLoaded) {
+      cubit.updateProfileImage(state.profileUserId, source);
     }
+  }
 
-    // Copia de los géneros favoritos actuales
-    List<GenreEntity> editableGenres = List.from(_favoriteGenres);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (modalContext) => StatefulBuilder(
-        builder: (builderContext, setModalState) {
-          return Padding(
+  void _showEditProfileModal() {
+    final cubit = context.read<ProfileCubit>();
+    final state = cubit.state;
+    if (state is ProfileLoaded) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (modalContext) => BlocProvider.value(
+          value: cubit,
+          child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(modalContext).viewInsets.bottom,
-              left: 20,
-              right: 20,
-              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Editar Perfil',
-                    style: GoogleFonts.monomaniacOne(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  // Campo nombre de usuario
-                  _buildModalTextField(usernameController, 'Nombre de usuario'),
-                  const SizedBox(height: 15),
-                  // Campo biografía
-                  _buildModalTextField(bioController, 'Biografía', maxLines: 3),
-                  const SizedBox(height: 15),
-                  // Sección de géneros favoritos
-                  Text(
-                    'Géneros Favoritos:',
-                    style: GoogleFonts.monomaniacOne(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Lista de géneros disponibles
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: _allGenres.map((genre) {
-                        final isSelected = editableGenres.any((g) => g.id == genre.id);
-                        return CheckboxListTile(
-                          title: Text(
-                            '#${genre.name}',
-                            style: GoogleFonts.monomaniacOne(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                            ),
-                          ),
-                          value: isSelected,
-                          onChanged: (bool? value) {
-                            setModalState(() {
-                              if (isSelected) {
-                                editableGenres.removeWhere((g) => g.id == genre.id);
-                              } else {
-                                editableGenres.add(genre);
-                              }
-                            });
-                          },
-                          checkColor: AppColors.textDark,
-                          activeColor: AppColors.primary,
-                          controlAffinity: ListTileControlAffinity.leading,
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  // Botón guardar cambios
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () async {
-                      try {
-                        // Llama al backend para actualizar el perfil
-                        final updatedProfile = await _profileApiService.updateProfile(
-                          _currentUserId,
-                          {
-                            'username': usernameController.text,
-                            'biography': bioController.text,
-                            'favoriteGenres': editableGenres.map((g) => g.id!).toList(),
-                          },
-                        );
-                        // Actualizar datos localmente con la respuesta
-                        setState(() {
-                          _username = updatedProfile.username;
-                          _bio = updatedProfile.biography ?? '';
-                          _favoriteGenres = (updatedProfile.favoriteGenres as List)
-                              .map((g) => GenreEntity(
-                                  id: g.id is int ? g.id : int.tryParse(g.id.toString()),
-                                  name: g.name))
-                              .toList();
-                        });
-                        Navigator.pop(modalContext);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Perfil actualizado exitosamente'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error al actualizar: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                    child: Text(
-                      'Guardar Cambios',
-                      style: GoogleFonts.monomaniacOne(
-                        color: AppColors.textDark,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Botón cancelar
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(modalContext);
-                    },
-                    child: Text(
-                      'Cancelar',
-                      style: GoogleFonts.monomaniacOne(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildModalTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      style: GoogleFonts.monomaniacOne(
-        color: AppColors.textPrimary,
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-      ),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.surfaceTransparent,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+            child: EditProfileModal(profileState: state),
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 12,
-        ),
-      ),
-    );
-  }
-
-  void _handleFollowButtonTap() {
-    if (!_isFollowed) {
-      setState(() {
-        _showFollowOptions = !_showFollowOptions;
-      });
-    } else {
-      _toggleFollow('unfollow');
+      );
     }
   }
 
-  void _handleFollowOption(String option) {
-    setState(() {
-      _showFollowOptions = false;
-    });
-    _toggleFollow(option);
+  void _handleFollow(bool isFollowing) {
+    print('[DEBUG] _handleFollow - isFollowing: $isFollowing');
+    final cubit = context.read<ProfileCubit>();
+    cubit.toggleFollow(isFollowing ? 'unfollow' : 'follow');
   }
 
   void _showChangeBannerImageDialog() {
@@ -556,227 +172,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _updateBannerImage(String source) async {
-    try {
-      setState(() { _isLoading = true; });
-      File? imageFile;
-      if (source == 'camera') {
-        imageFile = await ImageUtils.pickImage(source: ImageSource.camera);
-      } else {
-        imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
+  Widget _buildScrollableGenreGrid(List<Genre> favoriteGenres) {
+    final List<List<Genre>> genreRows = [];
+    for (int i = 0; i < favoriteGenres.length; i += 3) {
+      List<Genre> row = [];
+      for (int j = 0; j < 3 && (i + j) < favoriteGenres.length; j++) {
+        row.add(favoriteGenres[i + j]);
       }
-      if (imageFile == null) {
-        setState(() { _isLoading = false; });
-        return;
+      if (row.isNotEmpty) {
+        genreRows.add(row);
       }
-      String? base64Image = await ImageUtils.fileToBase64(imageFile);
-      if (base64Image == null) {
-        setState(() { _isLoading = false; });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al procesar la imagen'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      final updatedProfile = await _updateBannerUseCase.call(_currentUserId, base64Image);
-      setState(() {
-        _bannerImageUrl = updatedProfile.banner;
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Imagen de portada actualizada exitosamente'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      setState(() { _isLoading = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al actualizar imagen: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
-  }
-
-  Future<void> _updateProfileImage(String source) async {
-    try {
-      setState(() { _isLoading = true; });
-      File? imageFile;
-      if (source == 'camera') {
-        imageFile = await ImageUtils.pickImage(source: ImageSource.camera);
-      } else {
-        imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
-      }
-      if (imageFile == null) {
-        setState(() { _isLoading = false; });
-        return;
-      }
-      String? base64Image = await ImageUtils.fileToBase64(imageFile);
-      if (base64Image == null) {
-        setState(() { _isLoading = false; });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al procesar la imagen'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      final updatedProfile = await _updateProfilePictureUseCase.call(_currentUserId, base64Image);
-      setState(() {
-        _profileImageUrl = updatedProfile.profilePicture;
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Foto de perfil actualizada exitosamente'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      setState(() { _isLoading = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al actualizar imagen: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-Widget _buildScrollableGenreGrid() {
-  // Crear grupos de géneros para las filas (3 por fila)
-  final List<List<GenreEntity>> genreRows = [];
-  
-  // Dividir géneros en grupos de 3
-  for (int i = 0; i < _favoriteGenres.length; i += 3) {
-    List<GenreEntity> row = [];
-    
-    // Agregar hasta 3 géneros por fila
-    for (int j = 0; j < 3 && (i + j) < _favoriteGenres.length; j++) {
-      row.add(_favoriteGenres.firstWhere((g) => g.id == _favoriteGenres[i + j].id));
-    }
-    
-    if (row.isNotEmpty) {
-      genreRows.add(row);
-    }
-  }
-  
-  // Crear las filas scrolleables
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Column(
-      children: genreRows.map((rowGenres) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(
-            children: [
-              // Primer género de la fila
-              if (rowGenres.isNotEmpty) 
-                _buildScrollableGenreChip(rowGenres[0]),
-              
-              // Segundo género de la fila
-              if (rowGenres.length > 1) ...[
-                const SizedBox(width: 5),
-                _buildScrollableGenreChip(rowGenres[1]),
-              ],
-              
-              // Tercer género de la fila
-              if (rowGenres.length > 2) ...[
-                const SizedBox(width: 5),
-                _buildScrollableGenreChip(rowGenres[2]),
-              ],
-              
-              // Espaciado al final de cada fila
-              const SizedBox(width: 15),
-            ],
-          ),
-        );
-      }).toList(),
-    ),
-  );
-}
-
-Widget _buildScrollableGenreChip(GenreEntity genre) {
-  return GestureDetector(
-    onTap: () {
-      debugPrint('Tapped on genre: ${genre.name} (ID: ${genre.id})');
-    },
-    child: Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12), 
-      decoration: BoxDecoration(
-        color: AppColors.withOpacity(AppColors.surfaceLight, 0.2),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 4,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          '#${genre.name}',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.monomaniacOne(
-            color: AppColors.textPrimary,
-            fontSize: 19,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget _buildFollowOption(String option) {
-    IconData icon;
-    switch (option) {
-      case 'Todas':
-        icon = Icons.notifications_active;
-        break;
-      case 'Personalizadas':
-        icon = Icons.notifications;
-        break;
-      case 'Ninguna':
-        icon = Icons.notifications_off;
-        break;
-      default:
-        icon = Icons.circle;
-    }
-
-    return Container(
-      width: double.infinity,
-      height: 40,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _handleFollowOption(option),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        children: genreRows.map((rowGenres) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: AppColors.textPrimary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  option,
-                  style: GoogleFonts.monomaniacOne(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+                if (rowGenres.isNotEmpty)
+                  _buildScrollableGenreChip(rowGenres[0]),
+                if (rowGenres.length > 1) ...[
+                  const SizedBox(width: 5),
+                  _buildScrollableGenreChip(rowGenres[1]),
+                ],
+                if (rowGenres.length > 2) ...[
+                  const SizedBox(width: 5),
+                  _buildScrollableGenreChip(rowGenres[2]),
+                ],
+                const SizedBox(width: 15),
               ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildScrollableGenreChip(Genre genre) {
+    return GestureDetector(
+      onTap: () {
+        debugPrint('Tapped on genre:  [38;5;2m${genre.name} [0m (ID: ${genre.id})');
+      },
+      child: Container(
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.withOpacity(AppColors.surfaceLight, 0.2),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 4,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            '#${genre.name}',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.monomaniacOne(
+              color: AppColors.textPrimary,
+              fontSize: 19,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),
@@ -784,184 +244,499 @@ Widget _buildScrollableGenreChip(GenreEntity genre) {
     );
   }
 
+  Widget _buildOwnBooksGrid(List ownBooks) {
+    final List<List> bookColumns = [];
+    for (int i = 0; i < ownBooks.length; i += 2) {
+      List column = [];
+      for (int j = 0; j < 2 && (i + j) < ownBooks.length; j++) {
+        column.add(ownBooks[i + j]);
+      }
+      if (column.isNotEmpty) {
+        bookColumns.add(column);
+      }
+    }
+    return Row(
+      children: bookColumns.map((columnBooks) {
+        return Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: Column(
+            children: [
+              if (columnBooks.isNotEmpty)
+                BookImage(
+                  imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                  title: columnBooks[0].title,
+                  category: columnBooks[0].published ? "Publicado" : "Borrador",
+                  onTap: () {
+                    debugPrint('Tapped on own book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                    context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
+                  },
+                ),
+              if (columnBooks.length > 1) const SizedBox(height: 10),
+              if (columnBooks.length > 1)
+                BookImage(
+                  imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
+                  title: columnBooks[1].title,
+                  category: columnBooks[1].published ? "Publicado" : "Borrador",
+                  onTap: () {
+                    debugPrint('Tapped on own book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                    context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
+                  },
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildLikedBooksGrid(List books) {
+    final List<List> bookColumns = [];
+    for (int i = 0; i < books.length; i += 2) {
+      List column = [];
+      for (int j = 0; j < 2 && (i + j) < books.length; j++) {
+        column.add(books[i + j]);
+      }
+      if (column.isNotEmpty) {
+        bookColumns.add(column);
+      }
+    }
+    return Row(
+      children: bookColumns.map((columnBooks) {
+        return Padding(
+          padding: const EdgeInsets.only(right: 15),
+          child: Column(
+            children: [
+              if (columnBooks.isNotEmpty)
+                BookImage(
+                  imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                  title: columnBooks[0].title,
+                  onTap: () {
+                    debugPrint('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
+                    context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
+                  },
+                ),
+              if (columnBooks.length > 1) const SizedBox(height: 10),
+              if (columnBooks.length > 1)
+                BookImage(
+                  imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
+                  title: columnBooks[1].title,
+                  onTap: () {
+                    debugPrint('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
+                    context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
+                  },
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  double _calculateContainerHeight(int bookCount) {
+    if (bookCount == 1) {
+      return 200 + 30;
+    } else {
+      return 200 + 10 + 200 + 30;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
-        ),
-      );
-    }
+    return BlocConsumer<ProfileCubit, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+        if (state is ProfileImageUpdated) {
+          // Opcional: mostrar mensaje de éxito
+        }
+        if (state is ProfileUpdateSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is ProfileLoading || state is ProfileInitial) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            ),
+          );
+        }
+        if (state is ProfileLoaded) {
+          final profileImageUrl = state.profileImageUrl;
+          final bannerImageUrl = state.bannerImageUrl;
+          final isOwnProfile = state.isOwnProfile;
+          final username = state.username;
+          final friendCode = state.friendCode;
+          final bio = state.bio;
+          final friendsCount = state.friendsCount;
+          final followersCount = state.followersCount;
+          final showFollowOptions = state.showFollowOptions;
+          final isFollowed = state.isFollowed;
+          final favoriteGenres = state.favoriteGenres;
+          final ownBooks = state.ownBooks;
+          final favoriteBooks = state.favoriteBooks;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Contenido principal
-          SingleChildScrollView(
-            child: Column(
+          debugPrint('[DEBUG_FOLLOW] '
+          'profileImageUrl: $profileImageUrl, '
+          'bannerImageUrl: $bannerImageUrl, '
+          'isOwnProfile: $isOwnProfile, '
+          'username: $username, '
+          'friendCode: $friendCode, '
+          'bio: $bio, '
+          'friendsCount: $friendsCount, '
+          'followersCount: $followersCount, '
+          'showFollowOptions: $showFollowOptions, '
+          'isFollowed: $isFollowed, '
+          'favoriteGenres: ${favoriteGenres.map((g) => g.name).join(', ')}, '
+          'ownBooks: ${ownBooks.length}, '
+          'favoriteBooks: ${favoriteBooks.length}');
+
+
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Stack(
               children: [
-                // Banner del perfil con ícono de cámara - Posición exacta
-                Container(
-                  width: double.infinity,
-                  height: 163,
-                  child: Stack(
+                SingleChildScrollView(
+                  child: Column(
                     children: [
-                      // Banner de fondo
-                        // Fondo blanco detrás del banner
-                        Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          height: 163,
-                          color: Colors.white,
+                      // Banner del perfil con ícono de cámara
+                      Container(
+                        width: double.infinity,
+                        height: 163,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              child: Container(
+                                width: MediaQuery.of(context).size.width,
+                                height: 163,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              child: Container(
+                                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
+                                height: 163,
+                                decoration: BoxDecoration(
+                                  image: bannerImageUrl.isNotEmpty
+                                      ? DecorationImage(
+                                          image: Image.memory(base64Decode(bannerImageUrl)).image,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            if (isOwnProfile)
+                              Positioned(
+                                left: 352,
+                                top: 115,
+                                child: GestureDetector(
+                                  onTap: _showChangeBannerImageDialog,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceTransparent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.shadowColor,
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.camera_alt,
+                                      color: AppColors.textPrimary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        ),
-                        // Banner de imagen encima del fondo blanco
-                        Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
-                          height: 163,
-                          decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: Image.memory(base64Decode(_bannerImageUrl)).image,
-                            fit: BoxFit.cover,
-                          ),
-                          ),
-                        ),
-                        ),
-                      
-                      // Ícono de cámara - Posición exacta (solo en perfil propio)
-                      if (_isOwnProfile)
-                        Positioned(
-                          left: 352,
-                          top: 115,
-                          child: GestureDetector(
-                            onTap: _showChangeBannerImageDialog,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceTransparent,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.shadowColor,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 4),
+                      ),
+                      Transform.translate(
+                        offset: const Offset(0, -111),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 156,
+                                height: 150,
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      left: 0,
+                                      top: 0,
+                                      child: Container(
+                                        width: 150,
+                                        height: 150,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.shadowColor,
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 25,
+                                      top: 25,
+                                      child: Container(
+                                        width: 100,
+                                        height: 100,
+                                        clipBehavior: Clip.antiAlias,
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: profileImageUrl.isNotEmpty
+                                            ? Image.memory(
+                                                base64Decode(profileImageUrl),
+                                                width: 100,
+                                                height: 100,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return Container(
+                                                    width: 100,
+                                                    height: 100,
+                                                    color: Colors.transparent,
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 60,
+                                                      color: AppColors.textDark,
+                                                    ),
+                                                  );
+                                                },
+                                              )
+                                            : Container(
+                                                width: 100,
+                                                height: 100,
+                                                color: Colors.transparent,
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 60,
+                                                  color: AppColors.textDark,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    if (isOwnProfile)
+                                      Positioned(
+                                        left: 116,
+                                        top: 110,
+                                        child: GestureDetector(
+                                          onTap: _showChangeProfileImageDialog,
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.surfaceTransparent,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: AppColors.shadowColor,
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Center(
+                                              child: Container(
+                                                width: 20.8,
+                                                height: 20.8,
+                                                child: Icon(
+                                                  Icons.camera_alt,
+                                                  color: AppColors.textPrimary,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    username,
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceTransparent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.shadowColor,
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.copy,
+                                      color: AppColors.textPrimary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    friendCode,
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.primary,
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: Icon(
-                                Icons.camera_alt,
-                                color: AppColors.textPrimary,
-                                size: 20,
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Amigos $friendsCount',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Text(
+                                    'Seguidores $followersCount',
+                                    style: GoogleFonts.monomaniacOne(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                
-                // Sección principal del perfil
-                Transform.translate(
-                  offset: const Offset(0, -111),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Foto de perfil con ícono de cámara - Posición exacta
-                        Container(
-                          width: 156,
-                          height: 150,
-                          child: Stack(
-                            children: [
-                              // Contenedor amarillo de fondo
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 150,
-                                  height: 150,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadowColor,
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  bio,
+                                  style: GoogleFonts.cantarell(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
-                              
-                              // Imagen de perfil centrada
-                              Positioned(
-                                left: 25,
-                                top: 25,
-                                child: Container(
-                                  width: 100,
-                                  height: 100,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: _profileImageUrl.isNotEmpty
-                                      ? Image.memory(
-                                          base64Decode(_profileImageUrl),
-                                          width: 100,
-                                          height: 100,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              width: 100,
-                                              height: 100,
-                                              color: Colors.transparent,
-                                              child: Icon(
-                                                Icons.person,
-                                                size: 60,
-                                                color: AppColors.textDark,
+                              const SizedBox(height: 30),
+                              Stack(
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.shadowColor,
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(15),
+                                        onTap: isOwnProfile ? _showEditProfileModal : () => _handleFollow(isFollowed),
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (isOwnProfile) ...[
+                                                Icon(
+                                                  Icons.edit,
+                                                  color: AppColors.textDark,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              Text(
+                                                isOwnProfile
+                                                    ? 'Editar Perfil'
+                                                    : (isFollowed ? 'Siguiendo' : 'Seguir'),
+                                                style: GoogleFonts.monomaniacOne(
+                                                  color: AppColors.textDark,
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
                                               ),
-                                            );
-                                          },
-                                        )
-                                      : Container(
-                                          width: 100,
-                                          height: 100,
-                                          color: Colors.transparent,
-                                          child: Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: AppColors.textDark,
+                                            ],
                                           ),
                                         ),
-                                ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (!isOwnProfile && showFollowOptions)
+                                    Positioned(
+                                      top: 45,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceTransparent,
+                                          borderRadius: BorderRadius.circular(15),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.shadowColor,
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              
-                              // Ícono de cámara - Posición exacta (solo en perfil propio)
-                              if (_isOwnProfile)
-                                Positioned(
-                                  left: 116,
-                                  top: 110,
-                                  child: GestureDetector(
-                                    onTap: _showChangeProfileImageDialog,
-                                    child: Container(
-                                      width: 40,
-                                      height: 40,
+                              const SizedBox(height: 30),
+                              Container(
+                                width: double.infinity,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 30,
                                       decoration: BoxDecoration(
                                         color: AppColors.surfaceTransparent,
-                                        shape: BoxShape.circle,
+                                        borderRadius: BorderRadius.circular(15),
                                         boxShadow: [
                                           BoxShadow(
                                             color: AppColors.shadowColor,
@@ -971,568 +746,198 @@ Widget _buildScrollableGenreChip(GenreEntity genre) {
                                         ],
                                       ),
                                       child: Center(
-                                        child: Container(
-                                          width: 20.8,
-                                          height: 20.8,
-                                          child: Icon(
-                                            Icons.camera_alt,
-                                            color: AppColors.textPrimary,
-                                            size: 18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        // Información del usuario
-                        Row(
-                          children: [
-                            Text(
-                              _username,
-                              style: GoogleFonts.monomaniacOne(
-                                color: AppColors.textPrimary,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            // Badge del código de amigo con ícono
-                            Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surfaceTransparent,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadowColor,
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.copy,
-                                    color: AppColors.textPrimary,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _friendCode,
-                                  style: GoogleFonts.monomaniacOne(
-                                    color: AppColors.primary,
-                                    fontSize: 25,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 10),
-                        
-                        // Estadísticas de amigos y seguidores
-                        Row(
-                          children: [
-                            Text(
-                              'Amigos $_friendsCount',
-                              style: GoogleFonts.monomaniacOne(
-                                color: AppColors.textPrimary,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Text(
-                              'Seguidores $_followersCount',
-                              style: GoogleFonts.monomaniacOne(
-                                color: AppColors.textPrimary,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        // Biografía
-                        SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            _bio,
-                            style: GoogleFonts.cantarell(
-                              color: AppColors.textPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 30),
-                        
-                        // Botón principal (Editar Perfil o Seguir)
-                        Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.shadowColor,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(15),
-                                  onTap: _isOwnProfile ? _showEditProfileModal : _handleFollowButtonTap,
-                                  child: Center(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (_isOwnProfile) ...[
-                                          Icon(
-                                            Icons.edit,
-                                            color: AppColors.textDark,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                        Text(
-                                          _isOwnProfile 
-                                              ? 'Editar Perfil' 
-                                              : (_isFollowed ? 'Siguiendo' : 'Seguir'),
+                                        child: Text(
+                                          'Géneros Preferidos',
                                           style: GoogleFonts.monomaniacOne(
-                                            color: AppColors.textDark,
+                                            color: AppColors.textPrimary,
                                             fontSize: 20,
                                             fontWeight: FontWeight.w400,
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 106,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceTransparent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        padding: const EdgeInsets.all(15),
+                                        child: _buildScrollableGenreGrid(favoriteGenres.cast<Genre>()),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            
-                            // Menú desplegable de opciones de seguimiento
-                            if (!_isOwnProfile && _showFollowOptions)
-                              Positioned(
-                                top: 45,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surfaceTransparent,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.shadowColor,
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                              const SizedBox(height: 30),
+                              Container(
+                                width: double.infinity,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceTransparent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      _buildFollowOption('Todas'),
-                                      _buildFollowOption('Personalizadas'),
-                                      _buildFollowOption('Ninguna'),
-                                      Container(
-                                        width: double.infinity,
-                                        height: 40,
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            borderRadius: const BorderRadius.only(
-                                              bottomLeft: Radius.circular(15),
-                                              bottomRight: Radius.circular(15),
-                                            ),
-                                            onTap: () {
-                                              setState(() {
-                                                _showFollowOptions = false;
-                                              });
-                                            },
-                                            child: Center(
+                                      child: Center(
+                                        child: Text(
+                                          isOwnProfile ? 'Mis Libros' : 'Libros Publicados',
+                                          style: GoogleFonts.monomaniacOne(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      height: ownBooks.isEmpty ? 60 : _calculateContainerHeight(ownBooks.length),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceTransparent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ownBooks.isEmpty
+                                          ? Center(
                                               child: Text(
-                                                'Anular suscripción',
+                                                'No has escrito libros',
                                                 style: GoogleFonts.monomaniacOne(
                                                   color: AppColors.textPrimary,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w400,
                                                 ),
                                               ),
+                                            )
+                                          : SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              padding: const EdgeInsets.all(15),
+                                              child: _buildOwnBooksGrid(ownBooks),
                                             ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              Container(
+                                width: double.infinity,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceTransparent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'Libros Favoritos',
+                                          style: GoogleFonts.monomaniacOne(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w400,
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 30),
-                        
-                        // Sección de géneros favoritos - Scrolleable horizontal con altura fija
-                        Container(
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Header de géneros preferidos
-                              Container(
-                                width: 200,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
                                     ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'Géneros Preferidos',
-                                    style: GoogleFonts.monomaniacOne(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 10),
-                              
-                              // Contenedor principal de géneros - Scrolleable horizontal
-                              Container(
-                                width: double.infinity,
-                                height: 106, // Altura ajustada para solo 2 filas
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.all(15),
-                                  child: _buildScrollableGenreGrid(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        Container(
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 200,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    _isOwnProfile ? 'Mis Libros' : 'Libros Publicados',
-                                    style: GoogleFonts.monomaniacOne(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 10),
-                              
-                              // Contenedor principal de géneros - Scrolleable horizontal
-                              Container(
-                                width: double.infinity,
-                                height: _ownBooks.isEmpty ? 60 : _calculateContainerHeight(_ownBooks.length),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: _ownBooks.isEmpty 
-                                  ? Center(
-                                      child: Text(
-                                        'No has escrito libros',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400,
-                                        ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      width: double.infinity,
+                                      height: favoriteBooks.isEmpty ? 60 : _calculateContainerHeight(favoriteBooks.length),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceTransparent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.shadowColor,
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
                                       ),
-                                    )
-                                  : SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.all(15),
-                                      child: _buildOwnBooksGrid(_ownBooks),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        Container(
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Header de géneros preferidos
-                              Container(
-                                width: 200,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
+                                      child: favoriteBooks.isEmpty
+                                          ? Center(
+                                              child: Text(
+                                                'No tienes libros favoritos',
+                                                style: GoogleFonts.monomaniacOne(
+                                                  color: AppColors.textPrimary,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                            )
+                                          : SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              padding: const EdgeInsets.all(15),
+                                              child: _buildLikedBooksGrid(favoriteBooks),
+                                            ),
                                     ),
                                   ],
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    'Libros Favoritos',
-                                    style: GoogleFonts.monomaniacOne(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
                               ),
-                              
-                              const SizedBox(height: 10),
-                              
-                              Container(
-                                width: double.infinity,
-                                height: _favoriteBooks.isEmpty ? 60 : _calculateContainerHeight(_favoriteBooks.length),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceTransparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.shadowColor,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: _favoriteBooks.isEmpty 
-                                  ? Center(
-                                      child: Text(
-                                        'No tienes libros favoritos',
-                                        style: GoogleFonts.monomaniacOne(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    )
-                                  : SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.all(15),
-                                      child: _buildLikedBooksGrid(_favoriteBooks),
-                                    ),
-                              ),
+                              const SizedBox(height: 100),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 100), // Espacio para NavigationBar
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
+                const Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: CustomNavigationBar(currentRoute: '/Profile'),
                 ),
               ],
             ),
+          );
+        }
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: const Center(
+            child: Text('Error al cargar el perfil'),
           ),
-
-
-          // NavigationBar
-          const Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: CustomNavigationBar(
-              currentRoute: '/Profile'
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
-
-  // Widget para crear la grilla de libros propios (2 por columna)
-Widget _buildOwnBooksGrid(List<OwnBook> books) {
-  // Dividir libros en grupos de 2 para crear columnas
-  final List<List<OwnBook>> bookColumns = [];
-  
-  for (int i = 0; i < books.length; i += 2) {
-    List<OwnBook> column = [];
-    
-    // Agregar hasta 2 libros por columna
-    for (int j = 0; j < 2 && (i + j) < books.length; j++) {
-      column.add(books[i + j]);
-    }
-    
-    if (column.isNotEmpty) {
-      bookColumns.add(column);
-    }
-  }
-  
-  // Crear las columnas scrolleables
-  return Row(
-    children: bookColumns.map((columnBooks) {
-      return Padding(
-        padding: const EdgeInsets.only(right: 15),
-        child: Column(
-          children: [
-            // Primer libro de la columna
-            if (columnBooks.isNotEmpty)
-              BookImage(
-                imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
-                title: columnBooks[0].title,
-                category: columnBooks[0].published ? "Publicado" : "Borrador",
-                onTap: () {
-                  debugPrint('Tapped on own book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
-                  context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
-                },
-              ),
-            
-            // Espacio entre libros
-            if (columnBooks.length > 1) const SizedBox(height: 10),
-            
-            // Segundo libro de la columna
-            if (columnBooks.length > 1)
-              BookImage(
-                imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/4A90E2/FFFFFF?text=Libro+Propio",
-                title: columnBooks[1].title,
-                category: columnBooks[1].published ? "Publicado" : "Borrador",
-                onTap: () {
-                  debugPrint('Tapped on own book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
-                  context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
-                },
-              ),
-          ],
-        ),
-      );
-    }).toList(),
-  );
-}
-
-// Widget para crear la grilla de libros favoritos (2 por columna)
-Widget _buildLikedBooksGrid(List<Book> books) {
-  // Dividir libros en grupos de 2 para crear columnas
-  final List<List<Book>> bookColumns = [];
-  
-  for (int i = 0; i < books.length; i += 2) {
-    List<Book> column = [];
-    
-    // Agregar hasta 2 libros por columna
-    for (int j = 0; j < 2 && (i + j) < books.length; j++) {
-      column.add(books[i + j]);
-    }
-    
-    if (column.isNotEmpty) {
-      bookColumns.add(column);
-    }
-  }
-  
-  // Crear las columnas scrolleables
-  return Row(
-    children: bookColumns.map((columnBooks) {
-      return Padding(
-        padding: const EdgeInsets.only(right: 15),
-        child: Column(
-          children: [
-            // Primer libro de la columna
-            if (columnBooks.isNotEmpty)
-              BookImage(
-                imageUrl: columnBooks[0].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
-                title: columnBooks[0].title,
-                onTap: () {
-                  debugPrint('Tapped on liked book: ${columnBooks[0].title} (ID: ${columnBooks[0].id})');
-                  context.push("/bookDetail", extra: {"bookId": columnBooks[0].id});
-                },
-              ),
-            
-            // Espacio entre libros
-            if (columnBooks.length > 1) const SizedBox(height: 10),
-            
-            // Segundo libro de la columna
-            if (columnBooks.length > 1)
-              BookImage(
-                imageUrl: columnBooks[1].coverImage ?? "https://placehold.co/150x200/E24A4A/FFFFFF?text=Favorito",
-                title: columnBooks[1].title,
-                onTap: () {
-                  debugPrint('Tapped on liked book: ${columnBooks[1].title} (ID: ${columnBooks[1].id})');
-                  context.push("/bookDetail", extra: {"bookId": columnBooks[1].id});
-                },
-              ),
-          ],
-        ),
-      );
-    }).toList(),
-  );
-}
-
-// Función para calcular la altura del contenedor según el número de libros
-double _calculateContainerHeight(int bookCount) {
-  if (bookCount == 1) {
-    return 200 + 30; // Altura del libro + padding
-  } else {
-    return 200 + 10 + 200 + 30; // Dos libros + espacio + padding
-  }
-}
-
 }
 

@@ -22,7 +22,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
   // Determina el índice actual basado en la ruta
   int get currentIndex {
     switch (widget.currentRoute) {
-      case '/page2':
+      case '/downloaded':
         return 0;
       case '/writening':
         return 1;
@@ -41,7 +41,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
     String route;
     switch (index) {
       case 0:
-        route = '/page2';
+        route = '/downloaded';
         break;
       case 1:
         route = '/writening';

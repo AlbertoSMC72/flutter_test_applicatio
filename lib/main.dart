@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/services/firebase_service.dart';
+import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'core/services/firebase_service.dart' show firebaseMessagingBackgroundHandler;
 
 // Core imports
 import 'core/dependency_injection.dart' as di;
@@ -28,6 +28,16 @@ import 'features/writenBook/presentation/cubit/books_cubit.dart';
 import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
 import 'features/favBooks/presentation/favBooks_view.dart';
 import 'features/favBooks/presentation/cubit/fav_books_cubit.dart';
+import 'features/downloadedBooks/presentation/downloaded_books_view.dart';
+import 'features/downloadedBooks/presentation/cubit/downloaded_books_cubit.dart';
+import 'features/downloadedBooks/domain/usecases/get_downloaded_books_usecase.dart';
+import 'features/downloadedBooks/data/repositories/downloaded_books_repository_impl.dart';
+import 'core/services/download_service.dart';
+import 'features/downloadedBooks/presentation/downloaded_chapters_view.dart';
+import 'features/downloadedBooks/presentation/downloaded_chapter_reader_view.dart';
+import 'features/downloadedBooks/presentation/cubit/downloaded_chapters_cubit.dart';
+import 'features/search/presentation/book_search_view.dart';
+import 'features/search/presentation/cubit/book_search_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +54,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('✅ Firebase inicializado correctamente');
+    debugPrint('✅ Firebase inicializado correctamente'); 
 
     // Inicializar notificaciones
     final firebaseService = di.sl<FirebaseServiceImpl>();
@@ -68,7 +78,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final GoRouter router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: '/home',
       routes: [
         GoRoute(
           path: '/login',
@@ -116,6 +126,43 @@ class MyApp extends StatelessWidget {
               ),
         ),
         GoRoute(
+          path: '/downloaded',
+          name: 'DownloadedBooks',
+          builder: (context, state) => BlocProvider(
+            create: (context) => DownloadedBooksCubit(
+              GetDownloadedBooksUseCase(
+                DownloadedBooksRepositoryImpl(DownloadService()),
+              ),
+            ),
+            child: const DownloadedBooksView(),
+          ),
+        ),
+        GoRoute(
+          path: '/downloadedChapters',
+          name: 'DownloadedChapters',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return BlocProvider(
+              create: (context) => di.sl<DownloadedChaptersCubit>()..loadDownloadedChapters(args['bookId'] ?? ''),
+              child: DownloadedChaptersView(
+                bookId: args['bookId'] ?? '',
+                bookTitle: args['bookTitle'] ?? '',
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/downloadedChapterReader',
+          name: 'DownloadedChapterReader',
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return DownloadedChapterReaderView(
+              chapterId: args['chapterId'] ?? '',
+              bookTitle: args['bookTitle'] ?? '',
+            );
+          },
+        ),
+        GoRoute(
           path: '/bookDetail',
           name: 'BookDetail',
           builder: (context, state) {
@@ -139,10 +186,24 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/profile',
           name: 'Profile',
-          builder: (context, state) {
-            final args = state.extra as Map<String, dynamic>? ?? {};
-            return ProfileScreen(userId: args['userId']?.toString());
-          },
+          builder:
+              (context, state) => BlocProvider(
+                create: (context) => di.sl<ProfileCubit>(),
+                child: Builder(
+                  builder: (context) {
+                    final args = state.extra as Map<String, dynamic>? ?? {};
+                    return ProfileScreen(userId: args['userId']?.toString() ?? '');
+                  },
+                ),
+              ),
+        ),
+        GoRoute(
+          path: '/search',
+          name: 'BookSearch',
+          builder: (context, state) => BlocProvider(
+            create: (context) => di.sl<BookSearchCubit>(),
+            child: const BookSearchView(),
+          ),
         ),
       ],
       errorBuilder:

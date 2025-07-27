@@ -1,6 +1,7 @@
 // features/register/presentation/register_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/register_cubit.dart';
 import 'cubit/register_state.dart';
@@ -257,10 +258,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       SizedBox(height: screenHeight * 0.08),
 
-                      // Texto para ir a login
                       Center(
                         child: GestureDetector(
-                          onTap: () => Navigator.pushReplacementNamed(context, '/Login'),
+                          onTap: () => context.push("/login"),
                           child: RichText(
                             text: TextSpan(
                               style: GoogleFonts.monomaniacOne(

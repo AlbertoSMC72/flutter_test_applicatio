@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "407522746005",
-    "project_id": "watpato-e3fbf",
-    "storage_bucket": "watpato-e3fbf.firebasestorage.app"
+    "project_number": "928987760426",
+    "project_id": "watpato-56eff",
+    "storage_bucket": "watpato-56eff.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:407522746005:android:575960d512ba430c58459c",
+        "mobilesdk_app_id": "1:928987760426:android:482525e09a7c0a87434053",
         "android_client_info": {
-          "package_name": "com.example.watpato"
+          "package_name": "com.quetzalcoders.watpato"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDLXmOHJ05kUi2QEEvo8bZtvuPq5dhqOEY"
+          "current_key": "AIzaSyAPwuZ4iGAfuygptqr5Ox5bKaJBNCcbIoM"
         }
       ],
       "services": {

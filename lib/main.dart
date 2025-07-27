@@ -41,14 +41,17 @@ import 'features/search/presentation/cubit/book_search_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await di.init();
+  
+  try {
+    await di.init();
+    debugPrint('✅ Dependencias inicializadas correctamente');
+  } catch (e) {
+    debugPrint('❌ Error inicializando dependencias: $e');
+  }
 
   // Registrar el background handler ANTES de inicializar Firebase
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  if (!kIsWeb && Platform.isAndroid) {
-    await ScreenProtector.protectDataLeakageOn();
-  }
 
   try {
     await Firebase.initializeApp(
@@ -67,6 +70,7 @@ void main() async {
     debugPrint('Firebase Messaging Token: $token');
   } catch (e) {
     debugPrint('❌ Error inicializando Firebase: $e');
+    // Continuar con la aplicación incluso si Firebase falla
   }
 
   runApp(const MyApp());
@@ -78,7 +82,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final GoRouter router = GoRouter(
-      initialLocation: '/home',
+      initialLocation: '/login',
       routes: [
         GoRoute(
           path: '/login',

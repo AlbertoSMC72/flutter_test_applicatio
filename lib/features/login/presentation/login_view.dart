@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -373,28 +374,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(height: screenHeight * 0.05),
 
                       // Botones de acción
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          // Botón de Inicio de Sesión
-                          BlocBuilder<LoginCubit, LoginState>(
+                      if (_hasInternetConnection)
+                        // Botón de Inicio de Sesión (solo con internet)
+                        Center(
+                          child: BlocBuilder<LoginCubit, LoginState>(
                             builder: (context, state) {
                               final isLoading = state is LoginLoading;
 
                               return GestureDetector(
-                                onTap: (_hasInternetConnection && !isLoading)
-                                    ? () {
+                                onTap: isLoading
+                                    ? null
+                                    : () {
                                         context.read<LoginCubit>().loginUser();
-                                      }
-                                    : null,
+                                      },
                                 child: Container(
                                   width: screenWidth * 0.25,
                                   height: screenHeight * 0.06,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(25),
-                                    color: (_hasInternetConnection && !isLoading)
-                                        ? const Color(0xFFEDED3D) // Amarillo
-                                        : Colors.grey,
+                                    color: isLoading
+                                        ? Colors.grey
+                                        : const Color(0xFFEDED3D), // Amarillo
                                     boxShadow: [
                                       BoxShadow(
                                         offset: const Offset(0, 4),
@@ -404,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ],
                                   ),
                                   child: Center(
-                                    child: (_hasInternetConnection && isLoading)
+                                    child: isLoading
                                         ? SizedBox(
                                             width: screenWidth * 0.05,
                                             height: screenWidth * 0.05,
@@ -417,9 +417,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           )
                                         : Icon(
                                             Icons.login,
-                                            color: (_hasInternetConnection && !isLoading)
-                                                ? Colors.black87
-                                                : Colors.white54,
+                                            color: Colors.black87,
                                             size: screenWidth * 0.06,
                                           ),
                                   ),
@@ -427,50 +425,50 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                             },
                           ),
-
-                          // Botón para libros descargados (solo visible sin internet)
-                          if (!_hasInternetConnection)
-                            GestureDetector(
-                              onTap: () {
-                                context.push('/downloaded');
-                              },
-                              child: Container(
-                                width: screenWidth * 0.35,
-                                height: screenHeight * 0.06,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  color: const Color(0xFF3D175C), // Morado
-                                  boxShadow: [
-                                    BoxShadow(
-                                      offset: const Offset(0, 4),
-                                      blurRadius: 8,
-                                      color: Colors.black.withOpacity(0.3),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.download,
+                        )
+                      else
+                        // Botón para libros descargados (solo visible sin internet)
+                        Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              context.push('/downloaded');
+                            },
+                            child: Container(
+                              width: screenWidth * 0.35,
+                              height: screenHeight * 0.06,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                color: const Color(0xFF3D175C), // Morado
+                                boxShadow: [
+                                  BoxShadow(
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 8,
+                                    color: Colors.black.withOpacity(0.3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.download,
+                                    color: const Color(0xFFF2F2F2),
+                                    size: screenWidth * 0.05,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Text(
+                                    'Libros\nOffline',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.monomaniacOne(
+                                      fontSize: screenWidth * 0.03,
                                       color: const Color(0xFFF2F2F2),
-                                      size: screenWidth * 0.05,
                                     ),
-                                    SizedBox(width: screenWidth * 0.02),
-                                    Text(
-                                      'Libros\nOffline',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.monomaniacOne(
-                                        fontSize: screenWidth * 0.03,
-                                        color: const Color(0xFFF2F2F2),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                        ),
 
                       SizedBox(height: screenHeight * 0.04),
 

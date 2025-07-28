@@ -30,7 +30,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         return 2;
       case '/favorites':
         return 3;
-      case '/login':
+      case '/chat':
         return 4;
       default:
         return 2; // Home por defecto
@@ -53,7 +53,7 @@ class _CustomNavigationBarState extends State<CustomNavigationBar> {
         route = '/favorites';
         break;
       case 4:
-        route = '/login';
+        route = '/chat';
         break;
       default:
         route = '/home';

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubit/downloaded_chapters_cubit.dart';
-import '../../components/navigationBar/navigationBar.dart';
 import 'package:go_router/go_router.dart';
 
 class DownloadedChaptersView extends StatelessWidget {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../domain/entities/downloaded_chapter_entity.dart';
-import '../../components/navigationBar/navigationBar.dart';
 import '../data/repositories/downloaded_chapters_repository_impl.dart';
 import '../../../core/services/download_service.dart';
 

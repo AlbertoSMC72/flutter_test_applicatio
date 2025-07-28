@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:watpato/features/chat/presentation/chat_view.dart';
 import '/../../core/services/firebase_service.dart';
 import '/../../features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -206,6 +207,11 @@ class MyApp extends StatelessWidget {
             create: (context) => di.sl<BookSearchCubit>(),
             child: const BookSearchView(),
           ),
+        ),
+        GoRoute(
+          path: '/chat',
+          name: 'Chat',
+          builder: (context, state) => const ChatComingSoonView()
         ),
       ],
       errorBuilder:

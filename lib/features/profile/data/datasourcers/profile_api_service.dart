@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_application_1/core/consts/api_urls.dart';
-import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
+import '/../../core/consts/api_urls.dart';
+import '/../../features/profile/data/models/follow_user_model.dart';
+import '/../../features/profile/data/models/profile_model.dart';
 
 abstract class ProfileApiService {
   Future<Profile> getProfile(String userId);
@@ -98,8 +98,11 @@ class ProfileApiServiceImpl implements ProfileApiService {
   @override
   Future<Profile> updateProfilePicture(String userId, String base64Image) async {
     try {
+      // Construir la URL completa correctamente
+      final url = '${ApiUrls.apiUrlProfile}${ApiUrls.profilePicture}'.replaceAll('{userId}', userId);
+
       final response = await dio.patch(
-        ApiUrls.profilePicture.replaceAll('{userId}', userId),
+        url,
         data: jsonEncode({
           'profilePicture': base64Image,
         }),
@@ -123,8 +126,11 @@ class ProfileApiServiceImpl implements ProfileApiService {
   @override
   Future<Profile> updateBanner(String userId, String base64Image) async {
     try {
+      // Construir la URL completa correctamente
+      final url = '${ApiUrls.apiUrlProfile}${ApiUrls.banner}'.replaceAll('{userId}', userId);
+
       final response = await dio.patch(
-        ApiUrls.banner.replaceAll('{userId}', userId),
+        url,
         data: jsonEncode({
           'banner': base64Image,
         }),

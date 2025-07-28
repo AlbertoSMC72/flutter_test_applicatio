@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
+import '/../../features/components/searchUserBar/searchUserBar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../components/bookInfo/bookInfoWriter.dart';
@@ -160,7 +160,11 @@ class _BookSearchViewState extends State<BookSearchView> {
                                           ? book.genres.map((g) => g.name).join(', ')
                                           : 'Sin género',
                                       likesCount: 0,
-                                      onTap: () {},
+                                      onTap: () {
+                                        context.push("/bookDetail", extra: {
+                                          'bookId': book.id,
+                                        });
+                                      },
                                       published: false,
                                       onEdit: () {},
                                       onTogglePublish: () {},

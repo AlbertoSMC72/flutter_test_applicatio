@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:928987760426:android:482525e09a7c0a87434053",
+        "mobilesdk_app_id": "1:928987760426:android:cea0b0cd0135f1e2434053",
         "android_client_info": {
-          "package_name": "com.quetzalcoders.watpato"
+          "package_name": "com.example.watpato"
         }
       },
       "oauth_client": [],

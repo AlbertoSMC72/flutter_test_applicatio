@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/home/domain/entities/home_book_entity.dart';
+import '/../../features/home/domain/entities/home_book_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
+import '/../../features/components/bookImage/bookImage.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
-import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
+import '/../../features/components/searchUserBar/searchUserBar.dart';
+import '/../../features/components/navigationBar/navigationBar.dart';
 import 'cubit/home_cubit.dart';
 import 'cubit/home_state.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import '/../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);

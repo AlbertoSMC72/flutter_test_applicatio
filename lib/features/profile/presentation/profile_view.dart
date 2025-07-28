@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/components/bookImage/bookImage.dart';
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
-import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:flutter_application_1/features/profile/presentation/cubit/profile_state.dart';
-import 'package:flutter_application_1/features/profile/presentation/widgets/edit_profile_modal.dart';
+import '/../../features/components/bookImage/bookImage.dart';
+import '/../../features/profile/data/models/profile_model.dart';
+import '/../../features/profile/presentation/cubit/profile_cubit.dart';
+import '/../../features/profile/presentation/cubit/profile_state.dart';
+import '/../../features/profile/presentation/widgets/edit_profile_modal.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';

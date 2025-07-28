@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_application_1/features/components/bookInfo/bookInfoWriter.dart';
-import 'package:flutter_application_1/features/components/navigationBar/navigationBar.dart';
-import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
-import 'package:flutter_application_1/core/services/storage_service.dart';
+import '/../../features/components/bookInfo/bookInfoWriter.dart';
+import '/../../features/components/navigationBar/navigationBar.dart';
+import '/../../features/components/searchUserBar/searchUserBar.dart';
+import '/../../core/services/storage_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/fav_books_cubit.dart';

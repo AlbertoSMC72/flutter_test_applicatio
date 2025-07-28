@@ -1,14 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/services/firebase_service.dart';
-import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
+import '/../../core/services/firebase_service.dart';
+import '/../../features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:screen_protector/screen_protector.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
-import 'firebase_options.dart';
+import 'core/consts/firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Core imports
@@ -25,7 +23,7 @@ import 'features/register/presentation/register_view.dart';
 import 'features/register/presentation/cubit/register_cubit.dart';
 import 'features/writenBook/presentation/writenBook_view.dart';
 import 'features/writenBook/presentation/cubit/books_cubit.dart';
-import 'package:flutter_application_1/features/home/presentation/cubit/home_cubit.dart';
+import '/../../features/home/presentation/cubit/home_cubit.dart';
 import 'features/favBooks/presentation/favBooks_view.dart';
 import 'features/favBooks/presentation/cubit/fav_books_cubit.dart';
 import 'features/downloadedBooks/presentation/downloaded_books_view.dart';

@@ -1,5 +1,5 @@
-import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
+import '/../../features/profile/data/models/follow_user_model.dart';
+import '/../../features/profile/data/models/profile_model.dart';
 
 abstract class ProfileRepository {
   Future<Profile> getProfile(String userId);

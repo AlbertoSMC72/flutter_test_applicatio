@@ -1,6 +1,6 @@
-import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
-import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
+import '/../../features/profile/data/models/follow_user_model.dart';
+import '/../../features/profile/data/models/profile_model.dart';
+import '/../../features/profile/domain/repositories/profile_repository.dart';
 
 class GetProfileUseCase {
   final ProfileRepository repository;

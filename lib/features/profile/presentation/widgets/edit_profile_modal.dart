@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
-import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
+import '/../../features/profile/data/models/profile_model.dart';
+import '/../../features/writenBook/domain/entities/genre_entity.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import '/../../core/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -261,7 +261,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
   }
 
 
-  void _saveProfile() {
+  void saveProfile() {
     final username = _usernameController.text.trim();
     final bio = _bioController.text.trim();
 

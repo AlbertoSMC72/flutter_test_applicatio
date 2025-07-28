@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart' as writtenbook_entities;
-import 'package:flutter_application_1/features/profile/data/models/profile_model.dart';
+import '/../../features/writenBook/domain/entities/genre_entity.dart' as writtenbook_entities;
+import '/../../features/profile/data/models/profile_model.dart';
 
 abstract class ProfileState extends Equatable {
   const ProfileState();

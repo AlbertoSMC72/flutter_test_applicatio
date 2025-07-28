@@ -361,6 +361,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         horizontal: screenWidth * 0.05,
                       ),
                       child: TextField(
+                        enableSuggestions: false,
+                        autocorrect: false,
                         controller: controller,
                         keyboardType: keyboardType,
                         obscureText: obscureText,

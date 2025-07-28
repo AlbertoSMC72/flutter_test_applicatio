@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/components/searchUserBar/searchUserBar.dart';
+import '/../../features/components/searchUserBar/searchUserBar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'cubit/downloaded_books_cubit.dart';
 import '../../components/navigationBar/navigationBar.dart';
-import 'package:flutter_application_1/core/dependency_injection.dart';
+import '/../../core/dependency_injection.dart';
 import 'package:go_router/go_router.dart';
 
 class DownloadedBooksView extends StatefulWidget {

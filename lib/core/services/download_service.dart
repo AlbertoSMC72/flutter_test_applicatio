@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqlite_api.dart';
 import '../../features/book/domain/entities/book_detail_entity.dart';
 import '../../features/contentChapter/domain/entities/chapter_entity.dart' as detail_entities;
-import 'package:flutter_application_1/features/contentChapter/domain/usecases/chapter_usecases.dart';
+import '../../features/contentChapter/domain/usecases/chapter_usecases.dart';
 
 
 abstract class ChapterDetailProvider {

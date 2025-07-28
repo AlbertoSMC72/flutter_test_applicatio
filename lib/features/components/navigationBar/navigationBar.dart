@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import '/../../core/theme/app_colors.dart';
 
 class CustomNavigationBar extends StatefulWidget {
   final bool isVisible;

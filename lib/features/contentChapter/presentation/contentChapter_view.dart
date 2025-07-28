@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_application_1/features/contentChapter/presentation/cubit/chapter_cubit.dart';
+import '/../../features/contentChapter/presentation/cubit/chapter_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/dependency_injection.dart';
 import '../../../core/theme/app_colors.dart';

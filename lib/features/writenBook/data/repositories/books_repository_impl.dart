@@ -1,5 +1,5 @@
 // features/writenBook/data/repositories/books_repository_impl.dart
-import 'package:flutter_application_1/features/writenBook/domain/entities/genre_entity.dart';
+import '/../../features/writenBook/domain/entities/genre_entity.dart';
 
 import '../../domain/entities/book_entity.dart';
 import '../../domain/entities/user_books_entity.dart';

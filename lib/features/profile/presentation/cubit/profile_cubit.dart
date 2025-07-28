@@ -1,14 +1,14 @@
 import 'dart:io';
 
 
-import 'package:flutter_application_1/core/services/storage_service.dart';
-import 'package:flutter_application_1/core/utils/image_utils.dart';
-import 'package:flutter_application_1/features/book/domain/entities/book_detail_entity.dart';
-import 'package:flutter_application_1/features/profile/data/datasourcers/profile_api_service.dart';
-import 'package:flutter_application_1/features/profile/data/models/follow_user_model.dart';
+import '/../../core/services/storage_service.dart';
+import '/../../core/utils/image_utils.dart';
+import '/../../features/book/domain/entities/book_detail_entity.dart';
+import '/../../features/profile/data/datasourcers/profile_api_service.dart';
+import '/../../features/profile/data/models/follow_user_model.dart';
 
-import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
-import 'package:flutter_application_1/features/writenBook/domain/usecases/books_usecases.dart';
+import '/../../features/profile/domain/usecases/profile_usecases.dart';
+import '/../../features/writenBook/domain/usecases/books_usecases.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -280,6 +280,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           id = g['id'];
         } else if (g is String) {
           id = int.tryParse(g);
+        // ignore: unnecessary_type_check
         } else if (g is dynamic && g.id != null) {
           id = g.id;
         } else {
@@ -297,6 +298,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         'favoriteGenres': genreIds,
       };
 
+      // ignore: unnecessary_null_comparison
       if (currentState.currentUserId == null) {
         emit(ProfileError(message: 'No se encontró el ID de usuario para actualizar.'));
         return;

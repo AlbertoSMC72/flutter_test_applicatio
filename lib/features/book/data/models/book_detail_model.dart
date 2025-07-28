@@ -1,4 +1,4 @@
-import 'package:flutter_application_1/features/book/domain/entities/book_detail_entity.dart';
+import '/../../features/book/domain/entities/book_detail_entity.dart';
 
 class BookDetailModel extends BookDetailEntity {
   const BookDetailModel({

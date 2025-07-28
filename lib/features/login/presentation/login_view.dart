@@ -252,6 +252,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   horizontal: screenWidth * 0.05,
                                 ),
                                 child: TextField(
+                                  enableSuggestions: false,
+                                  autocorrect: false,
                                   controller: _passwordController,
                                   obscureText: true,
                                   onChanged:

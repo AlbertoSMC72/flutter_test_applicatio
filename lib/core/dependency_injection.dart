@@ -1,10 +1,10 @@
 // core/dependency_injection.dart
-import 'package:flutter_application_1/core/consts/api_urls.dart';
-import 'package:flutter_application_1/features/profile/data/datasourcers/profile_api_service.dart';
-import 'package:flutter_application_1/features/profile/data/repositories/profile_repository_impl.dart';
-import 'package:flutter_application_1/features/profile/domain/repositories/profile_repository.dart';
-import 'package:flutter_application_1/features/profile/domain/usecases/profile_usecases.dart';
-import 'package:flutter_application_1/features/profile/presentation/cubit/profile_cubit.dart';
+import '/../../core/consts/api_urls.dart';
+import '/../../features/profile/data/datasourcers/profile_api_service.dart';
+import '/../../features/profile/data/repositories/profile_repository_impl.dart';
+import '/../../features/profile/domain/repositories/profile_repository.dart';
+import '/../../features/profile/domain/usecases/profile_usecases.dart';
+import '/../../features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 

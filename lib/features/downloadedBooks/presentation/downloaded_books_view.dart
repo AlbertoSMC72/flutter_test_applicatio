@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '/../../features/components/searchUserBar/searchUserBar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'cubit/downloaded_books_cubit.dart';
 import '../../components/navigationBar/navigationBar.dart';
 import '/../../core/dependency_injection.dart';
@@ -16,6 +17,30 @@ class DownloadedBooksView extends StatefulWidget {
 }
 
 class _DownloadedBooksViewState extends State<DownloadedBooksView> {
+  bool _hasInternetConnection = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+  }
+
+  Future<void> _checkConnectivity() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    setState(() {
+      _hasInternetConnection = !connectivityResult.contains(ConnectivityResult.none);
+    });
+    
+    // Escuchar cambios en la conectividad
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      if (mounted) {
+        setState(() {
+          _hasInternetConnection = !results.contains(ConnectivityResult.none) && results.isNotEmpty;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -79,7 +104,8 @@ class _DownloadedBooksViewState extends State<DownloadedBooksView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 100),
+                              if (!_hasInternetConnection) const SizedBox(height: 20)
+                              else const SizedBox(height: 100),
                               Center(
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
@@ -304,8 +330,10 @@ class _DownloadedBooksViewState extends State<DownloadedBooksView> {
                   ),
                 ),
               ),
-              const CustomTopBar(),
-              const Positioned(
+
+              //si no hay internet no se muestra el top bar y el navigation bar
+              if (_hasInternetConnection) const CustomTopBar(),
+              if (_hasInternetConnection) const Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
@@ -317,4 +345,4 @@ class _DownloadedBooksViewState extends State<DownloadedBooksView> {
       ),
     );
   }
-} 
+}

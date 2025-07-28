@@ -76,7 +76,6 @@ class DownloadedChapterReaderView extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const CustomNavigationBar(currentRoute: '/downloaded'),
     );
   }
 } 

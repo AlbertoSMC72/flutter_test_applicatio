@@ -51,7 +51,6 @@ class DownloadedChaptersView extends StatelessWidget {
             return const SizedBox.shrink();
           },
         ),
-        bottomNavigationBar: const CustomNavigationBar(currentRoute: '/downloaded'),
       ),
     );
   }

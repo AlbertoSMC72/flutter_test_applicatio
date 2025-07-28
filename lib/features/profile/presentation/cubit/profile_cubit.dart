@@ -237,7 +237,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   Future<void> updateBannerImage(String userId, String source) async {
-    emit(ProfileLoading());
+    final currentState = state;
     try {
       File? imageFile;
       if (source == 'camera') {
@@ -245,17 +245,29 @@ class ProfileCubit extends Cubit<ProfileState> {
       } else {
         imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
       }
+      
       if (imageFile == null) {
-        emit(ProfileError(message: 'No se seleccionó imagen'));
+        print('[DEBUG_BANNER] No se seleccionó imagen');
         return;
       }
+      
       String? base64Image = await ImageUtils.fileToBase64(imageFile);
       if (base64Image == null) {
         emit(ProfileError(message: 'Error al procesar la imagen'));
         return;
       }
+      
       final updatedProfile = await updateBannerUseCase.call(userId, base64Image);
-      emit(ProfileImageUpdated(updatedProfile.banner, isBanner: true));
+      
+      if (currentState is ProfileLoaded) {
+        emit(currentState.copyWith(
+          bannerImageUrl: updatedProfile.banner,
+        ));
+      } else {
+        emit(ProfileImageUpdated(updatedProfile.banner, isBanner: true));
+        await refreshProfile();
+      }
+      
     } catch (e) {
       emit(ProfileError(message: 'Error al actualizar imagen: $e'));
     }
@@ -313,7 +325,18 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   Future<void> updateProfileImage(String userId, String source) async {
-    emit(ProfileLoading());
+    if (userId.isEmpty) {
+      emit(ProfileError(message: 'ID de usuario no válido'));
+      return;
+    }
+
+    final currentState = state;
+    
+    if (currentState is! ProfileLoaded) {
+      emit(ProfileError(message: 'Perfil no cargado'));
+      return;
+    }
+    
     try {
       File? imageFile;
       if (source == 'camera') {
@@ -321,18 +344,26 @@ class ProfileCubit extends Cubit<ProfileState> {
       } else {
         imageFile = await ImageUtils.pickImage(source: ImageSource.gallery);
       }
+      
       if (imageFile == null) {
-        emit(ProfileError(message: 'No se seleccionó imagen'));
+        print('[DEBUG_IMG] No se seleccionó imagen');
         return;
       }
+      
       String? base64Image = await ImageUtils.fileToBase64(imageFile);
       if (base64Image == null) {
         emit(ProfileError(message: 'Error al procesar la imagen'));
         return;
       }
+      
       final updatedProfile = await updateProfilePictureUseCase.call(userId, base64Image);
-      emit(ProfileImageUpdated(updatedProfile.profilePicture, isBanner: false));
+            
+      emit(currentState.copyWith(
+        profileImageUrl: updatedProfile.profilePicture,
+      ));
+      
     } catch (e) {
+      emit(currentState);
       emit(ProfileError(message: 'Error al actualizar imagen: $e'));
     }
   }

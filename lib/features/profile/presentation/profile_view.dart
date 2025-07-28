@@ -43,7 +43,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final cubit = context.read<ProfileCubit>();
     final state = cubit.state;
     if (state is ProfileLoaded) {
-      cubit.updateBannerImage(state.profileUserId, source);
+      cubit.updateBannerImage(state.currentUserId, source);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: Perfil no cargado correctamente')),
+      );
     }
   }
 
@@ -51,7 +55,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final cubit = context.read<ProfileCubit>();
     final state = cubit.state;
     if (state is ProfileLoaded) {
-      cubit.updateProfileImage(state.profileUserId, source);
+      cubit.updateProfileImage(state.currentUserId, source);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: Perfil no cargado correctamente')),
+      );
     }
   }
 
